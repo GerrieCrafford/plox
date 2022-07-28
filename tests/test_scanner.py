@@ -65,12 +65,14 @@ TEST_VALS = [
         ]
     ),
     (
-        'some_var=/*change this value*/"test_value"',
+        'some_var=/*change this value*/"test_value"\n5 /* another comment\nover two lines */6',
         [
             Token(TokenType.IDENTIFIER, "some_var", 'some_var', 1),
             Token(TokenType.EQUAL, "=", None, 1),
-            Token(TokenType.STRING, "test_value", 'test_value', 1),
-            Token(TokenType.EOF, "", None, 1),
+            Token(TokenType.STRING, '"test_value"', 'test_value', 1),
+            Token(TokenType.NUMBER, "5", 5, 2),
+            Token(TokenType.NUMBER, "6", 6, 3),
+            Token(TokenType.EOF, "", None, 3),
         ]
     )
 ]

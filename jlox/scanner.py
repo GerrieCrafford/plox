@@ -94,6 +94,17 @@ class Scanner:
                     # Comment goes to EoL
                     while self._peek() != "\n" and not self._is_at_end():
                         self._advance()
+                elif self._match(TokenType.STAR.value):
+                    # Block comment goes to */
+                    while (self._peek(), self._peek_next()) != ('*', '/') and not self._is_at_end():
+                        if self._peek() == '\n':
+                            self._line += 1
+                        self._advance()
+                    
+                    if not self._is_at_end():
+                        # Consume * and /
+                        self._advance()
+                        self._advance()
                 else:
                     self._add_token(TokenType.SLASH)
             case " " | "\r" | "\t":
