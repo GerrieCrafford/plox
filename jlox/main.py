@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from .scanner import Scanner
+from jlox.scanner import Scanner
 
 had_error = [False]
 

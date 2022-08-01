@@ -1,5 +1,5 @@
 from jlox.scanner import Scanner
-from jlox.token import Token, TokenType
+from jlox.tokens import Token, TokenType
 import pytest
 
 TEST_VALS = [
