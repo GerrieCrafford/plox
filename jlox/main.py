@@ -1,7 +1,10 @@
 import argparse
 import sys
+from jlox.interpreter import Interpreter
 
 from jlox.scanner import Scanner
+from jlox.parser import Parser
+from jlox.ast_printer import AstPrinter
 
 had_error = [False]
 
@@ -28,7 +31,15 @@ def run(source: str) -> None:
     scanner = Scanner(source)
     tokens = scanner.scan_tokens()
 
-    print(tokens)
+    parser = Parser(tokens)
+    expression = parser.parse()
+
+    if not expression:
+        return
+    
+    print(AstPrinter().print(expression))
+
+    Interpreter().interpret(expression)
 
 
 def run_file(file: str) -> None:

@@ -2,6 +2,7 @@ from enum import Enum, auto
 
 from dataclasses import dataclass
 
+LiteralType = str | float
 
 class TokenType(Enum):
     # Single char tokens
@@ -56,7 +57,7 @@ class TokenType(Enum):
 class Token:
     type: TokenType
     lexeme: str
-    literal: object | None
+    literal: LiteralType | None
     line: int
 
     def __str__(self) -> str:
