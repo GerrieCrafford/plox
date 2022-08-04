@@ -4,7 +4,6 @@ from jlox.interpreter import Interpreter
 
 from jlox.scanner import Scanner
 from jlox.parser import Parser
-from jlox.ast_printer import AstPrinter
 
 had_error = [False]
 
@@ -32,14 +31,12 @@ def run(source: str) -> None:
     tokens = scanner.scan_tokens()
 
     parser = Parser(tokens)
-    expression = parser.parse()
+    statements = parser.parse()
 
-    if not expression:
+    if not statements:
         return
     
-    print(AstPrinter().print(expression))
-
-    Interpreter().interpret(expression)
+    Interpreter().interpret(statements)
 
 
 def run_file(file: str) -> None:

@@ -1,5 +1,6 @@
 from jlox.tokens import Token, TokenType
 from jlox.expression import BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr
+from jlox.statement import ExpressionStmt, PrintStmt, Stmt
 
 class JloxSyntaxError(Exception):
     def __init__(self, token: Token, msg: str):
@@ -17,12 +18,28 @@ class Parser:
         self._tokens = tokens
         self._current = 0
     
-    def parse(self) -> Expr | None:
-        try:
-            return self._expression()
-        except JloxSyntaxError as e:
-            print(f'! {e}')
-            return None
+    def parse(self) -> list[Stmt]:
+        statements: list[Stmt] = []
+        while not self._is_at_end():
+            statements.append(self._statement())
+        
+        return statements
+    
+    def _statement(self) -> Stmt:
+        if self._match(TokenType.PRINT):
+            return self._print_statement()
+        
+        return self._expression_statement()
+    
+    def _print_statement(self) -> PrintStmt:
+        expr = self._expression()
+        self._consume(TokenType.SEMICOLON, "Expect ';' after value.")
+        return PrintStmt(expr)
+    
+    def _expression_statement(self) -> ExpressionStmt:
+        expr = self._expression()
+        self._consume(TokenType.SEMICOLON, "Expect ';' after value.")
+        return ExpressionStmt(expr)
 
     def _expression(self) -> Expr:
         return self._equality()
