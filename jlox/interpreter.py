@@ -1,23 +1,24 @@
 from typing import Any
+from jlox.environment import Environment
 from jlox.expression import (
+    AssignExpr,
     BinaryExpr,
     Expr,
     ExprVisitor,
     GroupingExpr,
     LiteralExpr,
     UnaryExpr,
+    VariableExpr,
 )
 from jlox.tokens import Token, TokenType
-from jlox.statement import Stmt, StmtVisitor, ExpressionStmt, PrintStmt
-
-
-class JloxRuntimeError(Exception):
-    def __init__(self, operator: Token, msg: str) -> None:
-        self._operator = operator
-        super().__init__(msg)
+from jlox.statement import Stmt, StmtVisitor, ExpressionStmt, PrintStmt, VarStmt
+from jlox.errors import JloxRuntimeError
 
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
+    def __init__(self):
+        self._environment = Environment()
+
     def interpret(self, statements: list[Stmt]):
         for stmt in statements:
             self._execute(stmt)
@@ -85,13 +86,26 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
                 return None
             case _:
                 return None
-
+    
+    def visitAssignExpr(self, expr: 'AssignExpr') -> Any:
+        value = self._evaluate(expr)
+        self._environment.assign(expr.name, value)
+        return value
+        
     def visitExpressionStmt(self, stmt: "ExpressionStmt") -> None:
         self._evaluate(stmt.expression)
+    
+    def visitVariableExpr(self, expr: 'VariableExpr') -> Any:
+        return self._environment.get(expr.name)
 
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         value = self._evaluate(stmt.expression)
         print(value)
+    
+    def visitVarStmt(self, stmt: 'VarStmt') -> None:
+        value = self._evaluate(stmt.initializer) if stmt.initializer else None
+
+        self._environment.define(stmt.name.lexeme, value)
 
     def _evaluate(self, expr: Expr) -> Any:
         return expr.accept(self)

@@ -1,16 +1,7 @@
 from jlox.tokens import Token, TokenType
-from jlox.expression import BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr
-from jlox.statement import ExpressionStmt, PrintStmt, Stmt
-
-class JloxSyntaxError(Exception):
-    def __init__(self, token: Token, msg: str):
-        if token.type == TokenType.EOF:
-            m = f"l.{token.line} - at end. {msg}"
-        else:
-            m = f"l.{token.line} - at {token.lexeme}. {msg}"
-
-        self._token = token
-        super().__init__(m)
+from jlox.expression import AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr
+from jlox.statement import ExpressionStmt, PrintStmt, Stmt, VarStmt
+from jlox.errors import JloxSyntaxError
 
 
 class Parser:
@@ -21,9 +12,25 @@ class Parser:
     def parse(self) -> list[Stmt]:
         statements: list[Stmt] = []
         while not self._is_at_end():
-            statements.append(self._statement())
+            statements.append(self._declaration())
         
         return statements
+    
+    def _declaration(self) -> Stmt:
+        if self._match(TokenType.VAR):
+            return self._var_declaration()
+        
+        return self._statement()
+    
+    def _var_declaration(self) -> Stmt:
+        name = self._consume(TokenType.IDENTIFIER, 'Expect variable name.')
+
+        initializer: Expr | None = None
+        if self._match(TokenType.EQUAL):
+            initializer = self._expression()
+        
+        self._consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
+        return VarStmt(name, initializer)
     
     def _statement(self) -> Stmt:
         if self._match(TokenType.PRINT):
@@ -42,7 +49,23 @@ class Parser:
         return ExpressionStmt(expr)
 
     def _expression(self) -> Expr:
-        return self._equality()
+        return self._assignment()
+    
+    def _assignment(self) -> Expr:
+        expr = self._equality()
+
+        if self._match(TokenType.EQUAL):
+            equals = self._previous()
+            value = self._assignment()
+
+            if isinstance(expr, VariableExpr):
+                name: Token = expr.name
+                return AssignExpr(name, value)
+            
+            raise JloxSyntaxError(equals, "Invalid assignment target.")
+        
+        return expr
+            
 
     def _equality(self) -> Expr:
         expr = self._comparison()
@@ -112,6 +135,9 @@ class Parser:
             expr = self._expression()
             self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression")
             return GroupingExpr(expr)
+        
+        if self._match(TokenType.IDENTIFIER):
+            return VariableExpr(self._previous())
 
         raise JloxSyntaxError(self._peek(), "Expect expression.")
 

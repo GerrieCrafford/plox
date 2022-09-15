@@ -9,6 +9,7 @@
         "**/.pytest_cache": true,
         "**/__pycache__": true,
     },
+    "editor.formatOnSave": true,
     "python.testing.pytestArgs": [
         "tests"
     ],
