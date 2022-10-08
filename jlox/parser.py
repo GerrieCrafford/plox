@@ -1,6 +1,23 @@
 from jlox.tokens import Token, TokenType
-from jlox.expression import AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr
-from jlox.statement import ExpressionStmt, PrintStmt, Stmt, VarStmt
+from jlox.expression import (
+    AssignExpr,
+    BinaryExpr,
+    Expr,
+    GroupingExpr,
+    LiteralExpr,
+    LogicalExpr,
+    UnaryExpr,
+    VariableExpr,
+)
+from jlox.statement import (
+    ExpressionStmt,
+    IfStmt,
+    PrintStmt,
+    Stmt,
+    VarStmt,
+    BlockStmt,
+    WhileStmt,
+)
 from jlox.errors import JloxSyntaxError
 
 
@@ -8,41 +25,116 @@ class Parser:
     def __init__(self, tokens: list[Token]):
         self._tokens = tokens
         self._current = 0
-    
+
     def parse(self) -> list[Stmt]:
         statements: list[Stmt] = []
         while not self._is_at_end():
             statements.append(self._declaration())
-        
+
         return statements
-    
+
     def _declaration(self) -> Stmt:
         if self._match(TokenType.VAR):
             return self._var_declaration()
-        
+
         return self._statement()
-    
+
     def _var_declaration(self) -> Stmt:
-        name = self._consume(TokenType.IDENTIFIER, 'Expect variable name.')
+        name = self._consume(TokenType.IDENTIFIER, "Expect variable name.")
 
         initializer: Expr | None = None
         if self._match(TokenType.EQUAL):
             initializer = self._expression()
-        
+
         self._consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
         return VarStmt(name, initializer)
-    
+
     def _statement(self) -> Stmt:
+        if self._match(TokenType.FOR):
+            return self._for_statement()
+        if self._match(TokenType.IF):
+            return self._if_statement()
         if self._match(TokenType.PRINT):
             return self._print_statement()
-        
+        if self._match(TokenType.WHILE):
+            return self._while_statement()
+        if self._match(TokenType.LEFT_BRACE):
+            return self._block_statement()
+
         return self._expression_statement()
-    
+
+    def _for_statement(self):
+        self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
+
+        initializer: Stmt | None
+        if self._match(TokenType.SEMICOLON):
+            initializer = None
+        elif self._match(TokenType.VAR):
+            initializer = self._var_declaration()
+        else:
+            initializer = self._expression_statement()
+
+        condition: Expr | None = None
+        if not self._check(TokenType.SEMICOLON):
+            condition = self._expression()
+
+        self._consume(TokenType.SEMICOLON, "Expect ';' after 'for'.")
+
+        increment: Expr | None = None
+        if not self._check(TokenType.SEMICOLON):
+            increment = self._expression()
+
+        self._consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        body = self._statement()
+
+        if increment:
+            body = BlockStmt([body, ExpressionStmt(increment)])
+
+        condition = condition or LiteralExpr(True)
+        body = WhileStmt(condition, body)
+
+        if initializer:
+            body = BlockStmt([initializer, body])
+
+        return body
+
+    def _if_statement(self) -> IfStmt:
+        self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
+        condition = self._expression()
+        self._consume(TokenType.RIGHT_PAREN, "Expect ')' after 'if'.")
+
+        then_branch = self._statement()
+        else_branch: Stmt | None = None
+        if self._match(TokenType.ELSE):
+            else_branch = self._statement()
+
+        return IfStmt(condition, then_branch, else_branch)
+
     def _print_statement(self) -> PrintStmt:
         expr = self._expression()
         self._consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return PrintStmt(expr)
-    
+
+    def _while_statement(self) -> WhileStmt:
+        self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
+        condition = self._expression()
+        self._consume(TokenType.RIGHT_PAREN, "Expect ')' after 'while'.")
+
+        loop_body = self._statement()
+
+        return WhileStmt(condition, loop_body)
+
+    def _block_statement(self) -> BlockStmt:
+        statements: list[Stmt] = []
+
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            statements.append(self._declaration())
+
+        self._consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
+
+        return BlockStmt(statements)
+
     def _expression_statement(self) -> ExpressionStmt:
         expr = self._expression()
         self._consume(TokenType.SEMICOLON, "Expect ';' after value.")
@@ -50,9 +142,9 @@ class Parser:
 
     def _expression(self) -> Expr:
         return self._assignment()
-    
+
     def _assignment(self) -> Expr:
-        expr = self._equality()
+        expr = self._or()
 
         if self._match(TokenType.EQUAL):
             equals = self._previous()
@@ -61,11 +153,30 @@ class Parser:
             if isinstance(expr, VariableExpr):
                 name: Token = expr.name
                 return AssignExpr(name, value)
-            
+
             raise JloxSyntaxError(equals, "Invalid assignment target.")
-        
+
         return expr
-            
+
+    def _or(self) -> Expr:
+        expr = self._and()
+
+        while self._match(TokenType.OR):
+            operator = self._previous()
+            right = self._and()
+            expr = LogicalExpr(expr, operator, right)
+
+        return expr
+
+    def _and(self) -> Expr:
+        expr = self._equality()
+
+        while self._match(TokenType.AND):
+            operator = self._previous()
+            right = self._equality()
+            expr = LogicalExpr(expr, operator, right)
+
+        return expr
 
     def _equality(self) -> Expr:
         expr = self._comparison()
@@ -135,7 +246,7 @@ class Parser:
             expr = self._expression()
             self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression")
             return GroupingExpr(expr)
-        
+
         if self._match(TokenType.IDENTIFIER):
             return VariableExpr(self._previous())
 

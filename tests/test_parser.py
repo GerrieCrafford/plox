@@ -6,9 +6,10 @@ from jlox.expression import (
     GroupingExpr,
     LiteralExpr,
     UnaryExpr,
+    VariableExpr,
 )
 from jlox.parser import Parser
-from jlox.statement import ExpressionStmt, PrintStmt, VarStmt
+from jlox.statement import ExpressionStmt, PrintStmt, VarStmt, BlockStmt
 from jlox.tokens import Token, TokenType
 
 TT = TokenType
@@ -125,3 +126,55 @@ def test_expression_statement(expr_tokens: list[Token], exp_expr: Expr):
 
     assert isinstance(statement, ExpressionStmt)
     assert statement.expression == exp_expr
+
+
+# def test_block_statement(block_tokens: list[Token], exp_block_statments: list[Stmt]):
+def test_block_statement():
+    tokens = [
+        Token(TokenType.LEFT_BRACE, "{", None, 1),
+        Token(TokenType.NUMBER, "5", 5, 1),
+        Token(TokenType.PLUS, "+", None, 1),
+        Token(TokenType.NUMBER, "10", 10, 1),
+        Token(TokenType.SEMICOLON, ";", None, 1),
+        Token(TokenType.VAR, "var", None, 1),
+        Token(TokenType.IDENTIFIER, "some_var", None, 1),
+        Token(TokenType.EQUAL, "=", None, 1),
+        Token(TokenType.NUMBER, "2", 2.0, 1),
+        Token(TokenType.SEMICOLON, ";", None, 1),
+        Token(TokenType.RIGHT_BRACE, "}", None, 1),
+        Token(TokenType.EOF, "", None, 1),
+    ]
+
+    p = Parser(tokens)
+
+    [statement] = p.parse()
+
+    assert isinstance(statement, BlockStmt)
+    assert statement.statements == [
+        ExpressionStmt(
+            BinaryExpr(
+                LiteralExpr(5.0), Token(TokenType.PLUS, "+", None, 1), LiteralExpr(10.0)
+            )
+        ),
+        VarStmt(Token(TokenType.IDENTIFIER, "some_var", None, 1), LiteralExpr(2.0)),
+    ]
+
+
+def test_print_assignment():
+    tokens = [
+        Token(TokenType.PRINT, "print", None, 1),
+        Token(TokenType.IDENTIFIER, "some_var", None, 1),
+        Token(TokenType.EQUAL, "=", None, 1),
+        Token(TokenType.NUMBER, "3", 3, 1),
+        Token(TokenType.SEMICOLON, ";", None, 1),
+        Token(TokenType.EOF, "", None, 1),
+    ]
+
+    p = Parser(tokens)
+
+    [statement] = p.parse()
+
+    assert isinstance(statement, PrintStmt)
+    assert isinstance(statement.expression, AssignExpr)
+    assert statement.expression.name == Token(TokenType.IDENTIFIER, "some_var", None, 1)
+    assert statement.expression.value == LiteralExpr(3)

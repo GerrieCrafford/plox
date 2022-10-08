@@ -7,11 +7,21 @@ from jlox.expression import (
     ExprVisitor,
     GroupingExpr,
     LiteralExpr,
+    LogicalExpr,
     UnaryExpr,
     VariableExpr,
 )
 from jlox.tokens import Token, TokenType
-from jlox.statement import Stmt, StmtVisitor, ExpressionStmt, PrintStmt, VarStmt
+from jlox.statement import (
+    Stmt,
+    StmtVisitor,
+    ExpressionStmt,
+    PrintStmt,
+    VarStmt,
+    BlockStmt,
+    IfStmt,
+    WhileStmt,
+)
 from jlox.errors import JloxRuntimeError
 
 
@@ -78,40 +88,80 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
                     TokenType.LESS,
                     TokenType.LESS_EQUAL,
                 ]:
-                    raise JloxRuntimeError(expr.operator, 'Operands must be two numbers')
-                
+                    raise JloxRuntimeError(
+                        expr.operator, "Operands must be two numbers"
+                    )
+
                 if tt == TokenType.PLUS:
-                    raise JloxRuntimeError(expr.operator, 'Operands must be two numbers or two strings')
-                
+                    raise JloxRuntimeError(
+                        expr.operator, "Operands must be two numbers or two strings"
+                    )
+
                 return None
             case _:
                 return None
-    
-    def visitAssignExpr(self, expr: 'AssignExpr') -> Any:
-        value = self._evaluate(expr)
+
+    def visitAssignExpr(self, expr: "AssignExpr") -> Any:
+        value = self._evaluate(expr.value)
         self._environment.assign(expr.name, value)
         return value
-        
+
     def visitExpressionStmt(self, stmt: "ExpressionStmt") -> None:
         self._evaluate(stmt.expression)
-    
-    def visitVariableExpr(self, expr: 'VariableExpr') -> Any:
+
+    def visitVariableExpr(self, expr: "VariableExpr") -> Any:
         return self._environment.get(expr.name)
+
+    def visitLogicalExpr(self, expr: "LogicalExpr") -> Expr:
+        left = self._evaluate(expr.left)
+
+        if expr.operator.type == TokenType.OR:
+            if left:
+                return left
+        else:
+            if not left:
+                return left
+
+        return self._evaluate(expr.right)
 
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         value = self._evaluate(stmt.expression)
         print(value)
-    
-    def visitVarStmt(self, stmt: 'VarStmt') -> None:
+
+    def visitVarStmt(self, stmt: "VarStmt") -> None:
         value = self._evaluate(stmt.initializer) if stmt.initializer else None
 
-        self._environment.define(stmt.name.lexeme, value)
+        self._environment.define(stmt.name, value)
+
+    def visitBlockStmt(self, stmt: "BlockStmt") -> None:
+        self._executeBlock(stmt.statements, Environment(self._environment))
+
+    def visitIfStmt(self, stmt: "IfStmt") -> None:
+        if self._evaluate(stmt.condition):
+            self._execute(stmt.then_branch)
+        elif stmt.else_branch:
+            self._execute(stmt.else_branch)
+
+    def visitWhileStmt(self, stmt: "WhileStmt") -> None:
+        while self._evaluate(stmt.condition):
+            self._execute(stmt.loop_body)
 
     def _evaluate(self, expr: Expr) -> Any:
         return expr.accept(self)
 
     def _execute(self, stmt: Stmt):
         stmt.accept(self)
+
+    def _executeBlock(self, statements: list[Stmt], env: Environment):
+        prev_env = self._environment
+
+        try:
+            self._environment = env
+
+            for statement in statements:
+                self._execute(statement)
+        finally:
+            self._environment = prev_env
 
     def _is_truthy(self, val: Any) -> bool:
         return bool(val)

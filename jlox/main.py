@@ -26,7 +26,7 @@ def error(line: int, message: str) -> None:
     report(line, "", message)
 
 
-def run(source: str) -> None:
+def run(source: str, interpreter: Interpreter) -> None:
     scanner = Scanner(source)
     tokens = scanner.scan_tokens()
 
@@ -35,24 +35,27 @@ def run(source: str) -> None:
 
     if not statements:
         return
-    
-    Interpreter().interpret(statements)
+
+    interpreter.interpret(statements)
 
 
 def run_file(file: str) -> None:
+    interpreter = Interpreter()
+
     with open(file, "r") as f:
         script = f.read()
 
-    run(script)
+    run(script, interpreter)
 
     if had_error[0]:
         sys.exit(65)
 
 
 def run_prompt() -> None:
+    interpreter = Interpreter()
     try:
         while (line := input("> ")) != "q":
-            run(line)
+            run(line, interpreter)
             had_error[0] = False
     except (KeyboardInterrupt, EOFError):
         pass
@@ -60,6 +63,9 @@ def run_prompt() -> None:
 
 def main():
     args = get_args()
+
+    run_file("test.jlox")
+    return
 
     if args.script:
         run_file(args.script)
