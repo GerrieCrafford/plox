@@ -25,7 +25,7 @@ def test_error_on_undefined_access(env: Environment):
 
 def test_definition_assignment_retrieval(env: Environment):
     var = create_token("another_var")
-    env.define(var, 10)
+    env.define(var.lexeme, 10)
     assert env.get(var) == 10
 
     env.assign(var, "some value")
@@ -39,8 +39,8 @@ def test_nesting_environments():
     child_var = create_token("child_var")
     parent_var = create_token("parent_var")
 
-    env_child.define(child_var, 1)
-    env_parent.define(parent_var, "value")
+    env_child.define(child_var.lexeme, 1)
+    env_parent.define(parent_var.lexeme, "value")
 
     assert env_child.get(child_var) == 1
     assert env_child.get(parent_var) == "value"

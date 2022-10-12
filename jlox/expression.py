@@ -27,6 +27,9 @@ class ExprVisitor(Protocol[T]):
     def visitLogicalExpr(self, expr: "LogicalExpr") -> T:
         ...
 
+    def visitCallExpr(self, expr: "CallExpr") -> T:
+        ...
+
 
 V = TypeVar("V")
 
@@ -96,3 +99,13 @@ class LogicalExpr(Expr):
 
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitLogicalExpr(self)
+
+
+@dataclass
+class CallExpr(Expr):
+    callee: Expr
+    paren: Token
+    arguments: list[Expr]
+
+    def accept(self, visitor: ExprVisitor[V]) -> V:
+        return visitor.visitCallExpr(self)

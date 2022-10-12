@@ -13,7 +13,7 @@ TEST_VALS = [
         ],
     ),
     (
-        '(1.12 + 0.1 - 3) > 9.1 and 2 == 3 or (1 - 0.1 / 7 * 3) <= 7 and true == false;',
+        "(1.12 + 0.1 - 3) > 9.1 and 2 == 3 or (1 - 0.1 / 7 * 3) <= 7 and true == false;",
         [
             Token(TokenType.LEFT_PAREN, "(", None, 1),
             Token(TokenType.NUMBER, "1.12", 1.12, 1),
@@ -46,35 +46,61 @@ TEST_VALS = [
             Token(TokenType.FALSE, "false", None, 1),
             Token(TokenType.SEMICOLON, ";", None, 1),
             Token(TokenType.EOF, "", None, 1),
-        ]
+        ],
     ),
     (
-        'some_var=5.8\nother_var=some_var+1 // this is a comment\n//another comment\nreturn nil',
+        "some_var=5.8\nother_var=some_var+1 // this is a comment\n//another comment\nreturn nil",
         [
-            Token(TokenType.IDENTIFIER, "some_var", 'some_var', 1),
+            Token(TokenType.IDENTIFIER, "some_var", "some_var", 1),
             Token(TokenType.EQUAL, "=", None, 1),
             Token(TokenType.NUMBER, "5.8", 5.8, 1),
-            Token(TokenType.IDENTIFIER, "other_var", 'other_var', 2),
+            Token(TokenType.IDENTIFIER, "other_var", "other_var", 2),
             Token(TokenType.EQUAL, "=", None, 2),
-            Token(TokenType.IDENTIFIER, "some_var", 'some_var', 2),
+            Token(TokenType.IDENTIFIER, "some_var", "some_var", 2),
             Token(TokenType.PLUS, "+", None, 2),
             Token(TokenType.NUMBER, "1", 1, 2),
             Token(TokenType.RETURN, "return", None, 4),
             Token(TokenType.NIL, "nil", None, 4),
             Token(TokenType.EOF, "", None, 4),
-        ]
+        ],
     ),
     (
         'some_var=/*change this value*/"test_value"\n5 /* another comment\nover two lines */6',
         [
-            Token(TokenType.IDENTIFIER, "some_var", 'some_var', 1),
+            Token(TokenType.IDENTIFIER, "some_var", "some_var", 1),
             Token(TokenType.EQUAL, "=", None, 1),
-            Token(TokenType.STRING, '"test_value"', 'test_value', 1),
+            Token(TokenType.STRING, '"test_value"', "test_value", 1),
             Token(TokenType.NUMBER, "5", 5, 2),
             Token(TokenType.NUMBER, "6", 6, 3),
             Token(TokenType.EOF, "", None, 3),
-        ]
-    )
+        ],
+    ),
+    (
+        'fun sayHi(first, last) { print "Hi, " + first + " " + last + "!"; }',
+        [
+            Token(TokenType.FUN, "fun", None, 1),
+            Token(TokenType.IDENTIFIER, "sayHi", "sayHi", 1),
+            Token(TokenType.LEFT_PAREN, "(", None, 1),
+            Token(TokenType.IDENTIFIER, "first", "first", 1),
+            Token(TokenType.COMMA, ",", None, 1),
+            Token(TokenType.IDENTIFIER, "last", "last", 1),
+            Token(TokenType.RIGHT_PAREN, ")", None, 1),
+            Token(TokenType.LEFT_BRACE, "{", None, 1),
+            Token(TokenType.PRINT, "print", None, 1),
+            Token(TokenType.STRING, '"Hi, "', "Hi, ", 1),
+            Token(TokenType.PLUS, "+", None, 1),
+            Token(TokenType.IDENTIFIER, "first", "first", 1),
+            Token(TokenType.PLUS, "+", None, 1),
+            Token(TokenType.STRING, '" "', " ", 1),
+            Token(TokenType.PLUS, "+", None, 1),
+            Token(TokenType.IDENTIFIER, "last", "last", 1),
+            Token(TokenType.PLUS, "+", None, 1),
+            Token(TokenType.STRING, '"!"', "!", 1),
+            Token(TokenType.SEMICOLON, ";", None, 1),
+            Token(TokenType.RIGHT_BRACE, "}", None, 1),
+            Token(TokenType.EOF, "", None, 1),
+        ],
+    ),
 ]
 
 

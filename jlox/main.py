@@ -64,9 +64,6 @@ def run_prompt() -> None:
 def main():
     args = get_args()
 
-    run_file("test.jlox")
-    return
-
     if args.script:
         run_file(args.script)
     else:

@@ -2,6 +2,7 @@ from jlox.tokens import Token, TokenType
 from jlox.expression import (
     AssignExpr,
     BinaryExpr,
+    CallExpr,
     Expr,
     GroupingExpr,
     LiteralExpr,
@@ -11,14 +12,16 @@ from jlox.expression import (
 )
 from jlox.statement import (
     ExpressionStmt,
+    FunctionStmt,
     IfStmt,
     PrintStmt,
+    ReturnStmt,
     Stmt,
     VarStmt,
     BlockStmt,
     WhileStmt,
 )
-from jlox.errors import JloxSyntaxError
+from jlox.errors import JloxRuntimeError, JloxSyntaxError
 
 
 class Parser:
@@ -36,6 +39,8 @@ class Parser:
     def _declaration(self) -> Stmt:
         if self._match(TokenType.VAR):
             return self._var_declaration()
+        if self._match(TokenType.FUN):
+            return self._function_declaration("function")
 
         return self._statement()
 
@@ -49,6 +54,31 @@ class Parser:
         self._consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
         return VarStmt(name, initializer)
 
+    def _function_declaration(self, kind: str) -> Stmt:
+        name = self._consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
+        self._consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
+
+        params: list[Token] = []
+        if not self._check(TokenType.RIGHT_PAREN):
+            while True:
+                if len(params) >= 255:
+                    raise JloxRuntimeError(
+                        self._peek(), "Can't have more than 255 parameters."
+                    )
+
+                params.append(
+                    self._consume(TokenType.IDENTIFIER, "Expect parameter name.")
+                )
+                if not self._match(TokenType.COMMA):
+                    break
+
+        self._consume(TokenType.RIGHT_PAREN, "Expect ')' after parameter list.")
+        self._consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.")
+
+        body = self._block_statement().statements
+
+        return FunctionStmt(name, params, body)
+
     def _statement(self) -> Stmt:
         if self._match(TokenType.FOR):
             return self._for_statement()
@@ -56,6 +86,8 @@ class Parser:
             return self._if_statement()
         if self._match(TokenType.PRINT):
             return self._print_statement()
+        if self._match(TokenType.RETURN):
+            return self._return_statement()
         if self._match(TokenType.WHILE):
             return self._while_statement()
         if self._match(TokenType.LEFT_BRACE):
@@ -115,6 +147,16 @@ class Parser:
         expr = self._expression()
         self._consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return PrintStmt(expr)
+
+    def _return_statement(self) -> ReturnStmt:
+        keyword = self._previous()
+        expr: Expr | None = None
+
+        if not self._check(TokenType.SEMICOLON):
+            expr = self._expression()
+
+        self._consume(TokenType.SEMICOLON, "Expect ';' after return.")
+        return ReturnStmt(keyword, expr)
 
     def _while_statement(self) -> WhileStmt:
         self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
@@ -229,7 +271,36 @@ class Parser:
             right = self._unary()
             return UnaryExpr(operator, right)
 
-        return self._primary()
+        return self._call()
+
+    def _call(self) -> Expr:
+        expr = self._primary()
+
+        while True:
+            if self._match(TokenType.LEFT_PAREN):
+                expr = self._finish_call(expr)
+            else:
+                break
+
+        return expr
+
+    def _finish_call(self, callee: Expr) -> Expr:
+        arguments: list[Expr] = []
+
+        if not self._check(TokenType.RIGHT_PAREN):
+            while True:
+                if len(arguments) > 255:
+                    raise JloxSyntaxError(
+                        self._peek(), "Can't have more than 255 arguments."
+                    )
+                arguments.append(self._or())
+
+                if not self._match(TokenType.COMMA):
+                    break
+
+        paren = self._consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments")
+
+        return CallExpr(callee, paren, arguments)
 
     def _primary(self) -> Expr:
         if self._match(TokenType.FALSE):

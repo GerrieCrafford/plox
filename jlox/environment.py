@@ -9,8 +9,8 @@ class Environment:
         self._values: dict[str, Any] = {}
         self._enclosing = enclosing
 
-    def define(self, name: Token, val: Any):
-        self._values[name.lexeme] = val
+    def define(self, name: str, val: Any):
+        self._values[name] = val
 
     def get(self, name: Token) -> Any:
         if name.lexeme in self._values:

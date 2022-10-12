@@ -3,6 +3,7 @@ from jlox.environment import Environment
 from jlox.expression import (
     AssignExpr,
     BinaryExpr,
+    CallExpr,
     Expr,
     ExprVisitor,
     GroupingExpr,
@@ -11,8 +12,11 @@ from jlox.expression import (
     UnaryExpr,
     VariableExpr,
 )
+from jlox.lox_function import LoxFunction
 from jlox.tokens import Token, TokenType
 from jlox.statement import (
+    FunctionStmt,
+    ReturnStmt,
     Stmt,
     StmtVisitor,
     ExpressionStmt,
@@ -23,11 +27,21 @@ from jlox.statement import (
     WhileStmt,
 )
 from jlox.errors import JloxRuntimeError
+from jlox.lox_callable import LoxCallable
+from jlox.native_functions import ClockFunc
+from jlox.return_wrapper import ReturnWrapper
 
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     def __init__(self):
-        self._environment = Environment()
+        self._globals = Environment()
+        self._environment = self._globals
+
+        self._globals.define("clock", ClockFunc)
+
+    @property
+    def globals(self) -> Environment:
+        return self._globals
 
     def interpret(self, statements: list[Stmt]):
         for stmt in statements:
@@ -124,14 +138,35 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
         return self._evaluate(expr.right)
 
+    def visitCallExpr(self, expr: "CallExpr") -> Any:
+        callee = self._evaluate(expr.callee)
+
+        if not isinstance(callee, LoxCallable):
+            raise JloxRuntimeError(expr.paren, "Can only call functions and classes.")
+
+        arguments = [self._evaluate(arg) for arg in expr.arguments]
+
+        if len(arguments) != callee.arity:
+            raise JloxRuntimeError(
+                expr.paren,
+                f"Expected {callee.arity} arguments but got {len(arguments)}.",
+            )
+
+        return callee.call(self, arguments)
+
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         value = self._evaluate(stmt.expression)
         print(value)
 
+    def visitReturnStmt(self, stmt: "ReturnStmt") -> None:
+        value = self._evaluate(stmt.value) if stmt.value is not None else None
+
+        raise ReturnWrapper(value)
+
     def visitVarStmt(self, stmt: "VarStmt") -> None:
         value = self._evaluate(stmt.initializer) if stmt.initializer else None
 
-        self._environment.define(stmt.name, value)
+        self._environment.define(stmt.name.lexeme, value)
 
     def visitBlockStmt(self, stmt: "BlockStmt") -> None:
         self._executeBlock(stmt.statements, Environment(self._environment))
@@ -145,6 +180,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     def visitWhileStmt(self, stmt: "WhileStmt") -> None:
         while self._evaluate(stmt.condition):
             self._execute(stmt.loop_body)
+
+    def visitFunctionStmt(self, stmt: "FunctionStmt") -> None:
+        func = LoxFunction(stmt)
+        self._environment.define(stmt.name.lexeme, func)
 
     def _evaluate(self, expr: Expr) -> Any:
         return expr.accept(self)

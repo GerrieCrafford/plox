@@ -27,6 +27,12 @@ class StmtVisitor(Protocol[T]):
     def visitWhileStmt(self, stmt: "WhileStmt") -> T:
         ...
 
+    def visitFunctionStmt(self, stmt: "FunctionStmt") -> T:
+        ...
+
+    def visitReturnStmt(self, stmt: "ReturnStmt") -> T:
+        ...
+
 
 V = TypeVar("V")
 
@@ -86,3 +92,22 @@ class WhileStmt(Stmt):
 
     def accept(self, visitor: StmtVisitor[V]) -> V:
         return visitor.visitWhileStmt(self)
+
+
+@dataclass
+class FunctionStmt(Stmt):
+    name: Token
+    params: list[Token]
+    body: list[Stmt]
+
+    def accept(self, visitor: StmtVisitor[V]) -> V:
+        return visitor.visitFunctionStmt(self)
+
+
+@dataclass
+class ReturnStmt(Stmt):
+    keyword: Token
+    value: Expr | None
+
+    def accept(self, visitor: StmtVisitor[V]) -> V:
+        return visitor.visitReturnStmt(self)
