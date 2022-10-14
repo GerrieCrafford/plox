@@ -10,17 +10,18 @@ from jlox.return_wrapper import ReturnWrapper
 
 
 class LoxFunction(LoxCallable):
-    def __init__(self, declaration: FunctionStmt) -> None:
+    def __init__(self, declaration: FunctionStmt, closure: Environment) -> None:
         self._declaration = declaration
+        self._closure = closure
 
     def call(self, interpreter: "Interpreter", arguments: list[Any]) -> Any:
-        env = Environment(interpreter.globals)
+        env = Environment(self._closure)
 
         for param, arg in zip(self._declaration.params, arguments):
             env.define(param.lexeme, arg)
 
         try:
-            interpreter._executeBlock(self._declaration.body, env)
+            interpreter._executeBlock(self._declaration.body, self._closure)
         except ReturnWrapper as ret:
             return ret.value
         else:

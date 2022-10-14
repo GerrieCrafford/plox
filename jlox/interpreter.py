@@ -182,7 +182,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
             self._execute(stmt.loop_body)
 
     def visitFunctionStmt(self, stmt: "FunctionStmt") -> None:
-        func = LoxFunction(stmt)
+        func = LoxFunction(stmt, self._environment)
         self._environment.define(stmt.name.lexeme, func)
 
     def _evaluate(self, expr: Expr) -> Any:
