@@ -38,6 +38,13 @@ class Expr(Protocol):
     def accept(self, visitor: ExprVisitor[V]) -> V:
         ...
 
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
 
 @dataclass
 class BinaryExpr(Expr):
@@ -48,6 +55,13 @@ class BinaryExpr(Expr):
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitBinaryExpr(self)
 
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
 
 @dataclass
 class GroupingExpr(Expr):
@@ -56,6 +70,13 @@ class GroupingExpr(Expr):
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitGroupingExpr(self)
 
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
 
 @dataclass
 class LiteralExpr(Expr):
@@ -63,6 +84,13 @@ class LiteralExpr(Expr):
 
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitLiteralExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
 
 
 @dataclass
@@ -73,6 +101,13 @@ class UnaryExpr(Expr):
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitUnaryExpr(self)
 
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
 
 @dataclass
 class AssignExpr(Expr):
@@ -82,6 +117,13 @@ class AssignExpr(Expr):
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitAssignExpr(self)
 
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
 
 @dataclass
 class VariableExpr(Expr):
@@ -89,6 +131,13 @@ class VariableExpr(Expr):
 
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitVariableExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
 
 
 @dataclass
@@ -100,6 +149,13 @@ class LogicalExpr(Expr):
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitLogicalExpr(self)
 
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
 
 @dataclass
 class CallExpr(Expr):
@@ -109,3 +165,10 @@ class CallExpr(Expr):
 
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitCallExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)

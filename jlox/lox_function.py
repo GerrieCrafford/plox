@@ -1,4 +1,5 @@
 from typing import Any, TYPE_CHECKING
+from enum import Enum
 
 if TYPE_CHECKING:
     from jlox.interpreter import Interpreter
@@ -7,6 +8,11 @@ from jlox.lox_callable import LoxCallable
 from jlox.statement import FunctionStmt
 from jlox.environment import Environment
 from jlox.return_wrapper import ReturnWrapper
+
+
+class FunctionType(Enum):
+    NONE = 0
+    FUNCTION = 1
 
 
 class LoxFunction(LoxCallable):
@@ -21,7 +27,7 @@ class LoxFunction(LoxCallable):
             env.define(param.lexeme, arg)
 
         try:
-            interpreter._executeBlock(self._declaration.body, self._closure)
+            interpreter._executeBlock(self._declaration.body, env)
         except ReturnWrapper as ret:
             return ret.value
         else:

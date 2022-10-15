@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 @runtime_checkable
 class LoxCallable(Protocol):
-    def call(self, interpreter: "Interpreter", arguments: list[Any]) -> Any:
+    def call(self, interpreter: "Interpreter", arguments: list[Any]) -> Any | None:
         ...
 
     @property

@@ -4,6 +4,7 @@ from jlox.interpreter import Interpreter
 
 from jlox.scanner import Scanner
 from jlox.parser import Parser
+from jlox.resolver import Resolver
 
 had_error = [False]
 
@@ -35,6 +36,9 @@ def run(source: str, interpreter: Interpreter) -> None:
 
     if not statements:
         return
+
+    resolver = Resolver(interpreter)
+    resolver.resolve(statements)
 
     interpreter.interpret(statements)
 

@@ -28,7 +28,7 @@ from jlox.statement import (
 )
 from jlox.errors import JloxRuntimeError
 from jlox.lox_callable import LoxCallable
-from jlox.native_functions import ClockFunc
+from jlox.native_functions import AssertEqualFunc, ClockFunc
 from jlox.return_wrapper import ReturnWrapper
 
 
@@ -37,7 +37,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         self._globals = Environment()
         self._environment = self._globals
 
-        self._globals.define("clock", ClockFunc)
+        self._globals.define("clock", ClockFunc())
+        self._globals.define("assert_equal", AssertEqualFunc())
+
+        self._locals: dict[Expr, int] = {}
 
     @property
     def globals(self) -> Environment:
@@ -117,14 +120,20 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
     def visitAssignExpr(self, expr: "AssignExpr") -> Any:
         value = self._evaluate(expr.value)
-        self._environment.assign(expr.name, value)
+
+        dist = self._locals[expr]
+        if dist is not None:
+            self._environment.assign_at(dist, expr.name, value)
+        else:
+            self._globals.assign(expr.name, value)
+
         return value
 
     def visitExpressionStmt(self, stmt: "ExpressionStmt") -> None:
         self._evaluate(stmt.expression)
 
     def visitVariableExpr(self, expr: "VariableExpr") -> Any:
-        return self._environment.get(expr.name)
+        return self._lookup_var(expr.name, expr)
 
     def visitLogicalExpr(self, expr: "LogicalExpr") -> Expr:
         left = self._evaluate(expr.left)
@@ -185,6 +194,9 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         func = LoxFunction(stmt, self._environment)
         self._environment.define(stmt.name.lexeme, func)
 
+    def resolve(self, expr: Expr, depth: int):
+        self._locals[expr] = depth
+
     def _evaluate(self, expr: Expr) -> Any:
         return expr.accept(self)
 
@@ -213,3 +225,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
             raise JloxRuntimeError(operator, "Operand must be a number.")
         else:
             raise JloxRuntimeError(operator, "Operands must be numbers.")
+
+    def _lookup_var(self, name: Token, expr: Expr):
+        dist = self._locals.get(expr, None)
+        if dist is not None:
+            return self._environment.get_at(dist, name)
+        else:
+            return self._globals.get(name)

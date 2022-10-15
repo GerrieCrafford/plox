@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Protocol, TypeVar
+from typing import Protocol, Sequence, TypeVar
 
 from jlox.expression import Expr
 from jlox.tokens import Token
@@ -69,7 +69,7 @@ class VarStmt(Stmt):
 
 @dataclass
 class BlockStmt(Stmt):
-    statements: list[Stmt]
+    statements: Sequence[Stmt]
 
     def accept(self, visitor: StmtVisitor[V]) -> V:
         return visitor.visitBlockStmt(self)
@@ -98,7 +98,7 @@ class WhileStmt(Stmt):
 class FunctionStmt(Stmt):
     name: Token
     params: list[Token]
-    body: list[Stmt]
+    body: Sequence[Stmt]
 
     def accept(self, visitor: StmtVisitor[V]) -> V:
         return visitor.visitFunctionStmt(self)
