@@ -88,23 +88,23 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         right = self._evaluate(expr.right)
 
         match (expr.operator.type, left, right):
-            case TokenType.MINUS, float(l), float(r):
+            case TokenType.MINUS, float(l) | int(l), float(r) | int(r):
                 return l - r
-            case TokenType.SLASH, float(l), float(r):
+            case TokenType.SLASH, float(l) | int(l), float(r) | int(r):
                 return l / r
-            case TokenType.STAR, float(l), float(r):
+            case TokenType.STAR, float(l) | int(l), float(r) | int(r):
                 return l * r
-            case TokenType.PLUS, float(l), float(r):
+            case TokenType.PLUS, float(l) | int(l), float(r) | int(r):
                 return l + r
             case TokenType.PLUS, str(l), str(r):
                 return l + r
-            case TokenType.GREATER, float(l), float(r):
+            case TokenType.GREATER, float(l) | int(l), float(r) | int(r):
                 return l > r
-            case TokenType.GREATER_EQUAL, float(l), float(r):
+            case TokenType.GREATER_EQUAL, float(l) | int(l), float(r) | int(r):
                 return l >= r
-            case TokenType.LESS, float(l), float(r):
+            case TokenType.LESS, float(l) | int(l), float(r) | int(r):
                 return l < r
-            case TokenType.LESS_EQUAL, float(l), float(r):
+            case TokenType.LESS_EQUAL, float(l) | int(l), float(r) | int(r):
                 return l <= r
             case TokenType.BANG_EQUAL, l, r:
                 return l != r
