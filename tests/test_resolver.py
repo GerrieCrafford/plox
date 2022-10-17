@@ -51,6 +51,7 @@ def test_error_on_return_in_init(resolver: Resolver):
     statements = [
         ClassStmt(
             name("TestClass"),
+            None,
             [
                 FunctionStmt(
                     name("init"),

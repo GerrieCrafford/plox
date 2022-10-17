@@ -96,7 +96,7 @@ def test_instance_getter(interpreter: Interpreter):
     resolver = Resolver(interpreter)
 
     statements: list[Stmt] = [
-        ClassStmt(name("TestClass"), []),
+        ClassStmt(name("TestClass"), None, []),
         VarStmt(
             name("instance"),
             CallExpr(VariableExpr(name("TestClass")), closing_paren(), []),
