@@ -9,12 +9,18 @@ from jlox.expression import (
     GroupingExpr,
     LiteralExpr,
     LogicalExpr,
+    SetExpr,
+    ThisExpr,
     UnaryExpr,
     VariableExpr,
+    GetExpr,
 )
+from jlox.lox_class import LoxClass
 from jlox.lox_function import LoxFunction
+from jlox.lox_instance import LoxInstance
 from jlox.tokens import Token, TokenType
 from jlox.statement import (
+    ClassStmt,
     FunctionStmt,
     ReturnStmt,
     Stmt,
@@ -121,7 +127,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     def visitAssignExpr(self, expr: "AssignExpr") -> Any:
         value = self._evaluate(expr.value)
 
-        dist = self._locals[expr]
+        dist = self._locals.get(expr, None)
         if dist is not None:
             self._environment.assign_at(dist, expr.name, value)
         else:
@@ -146,6 +152,27 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
                 return left
 
         return self._evaluate(expr.right)
+
+    def visitGetExpr(self, expr: "GetExpr") -> Expr:
+        obj = self._evaluate(expr.object)
+
+        if not isinstance(obj, LoxInstance):
+            raise JloxRuntimeError(expr.name, "Only instances have properties.")
+
+        return obj.get(expr.name)
+
+    def visitSetExpr(self, expr: "SetExpr") -> Any:
+        obj = self._evaluate(expr.object)
+
+        if not isinstance(obj, LoxInstance):
+            raise JloxRuntimeError(expr.name, "Only instances have properties.")
+
+        val = self._evaluate(expr.value)
+        obj.set(expr.name, val)
+        return val
+
+    def visitThisExpr(self, expr: "ThisExpr") -> Any:
+        return self._lookup_var(expr.keyword, expr)
 
     def visitCallExpr(self, expr: "CallExpr") -> Any:
         callee = self._evaluate(expr.callee)
@@ -193,6 +220,20 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     def visitFunctionStmt(self, stmt: "FunctionStmt") -> None:
         func = LoxFunction(stmt, self._environment)
         self._environment.define(stmt.name.lexeme, func)
+
+    def visitClassStmt(self, stmt: "ClassStmt") -> None:
+        self._environment.define(stmt.name.lexeme, None)
+
+        methods: dict[str, LoxFunction] = {}
+        for method in stmt.methods:
+            function = LoxFunction(
+                method, self._environment, method.name.lexeme == "init"
+            )
+            methods[method.name.lexeme] = function
+
+        lox_class = LoxClass(stmt.name.lexeme, methods)
+
+        self._environment.assign(stmt.name, lox_class)
 
     def resolve(self, expr: Expr, depth: int):
         self._locals[expr] = depth

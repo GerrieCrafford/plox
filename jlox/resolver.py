@@ -8,12 +8,16 @@ from jlox.expression import (
     GroupingExpr,
     LiteralExpr,
     LogicalExpr,
+    SetExpr,
+    ThisExpr,
     UnaryExpr,
     VariableExpr,
+    GetExpr,
 )
 from jlox.interpreter import Interpreter
 from jlox.lox_function import FunctionType
 from jlox.statement import (
+    ClassStmt,
     FunctionStmt,
     ReturnStmt,
     Stmt,
@@ -26,6 +30,7 @@ from jlox.statement import (
     WhileStmt,
 )
 from jlox.tokens import Token
+from jlox.lox_class import ClassType
 from jlox.errors import JloxSyntaxError
 
 
@@ -33,7 +38,9 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
     def __init__(self, interpreter: Interpreter) -> None:
         self._scopes: list[dict[str, bool]] = []
         self._interpreter = interpreter
+
         self._current_function = FunctionType.NONE
+        self._current_class = ClassType.NONE
 
     def resolve(self, statements: Sequence[Stmt]):
         self._resolve_stmts(statements)
@@ -79,6 +86,19 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
         for arg in expr.arguments:
             self._resolve_expr(arg)
 
+    def visitGetExpr(self, expr: "GetExpr") -> None:
+        self._resolve_expr(expr.object)
+
+    def visitSetExpr(self, expr: "SetExpr") -> None:
+        self._resolve_expr(expr.value)
+        self._resolve_expr(expr.object)
+
+    def visitThisExpr(self, expr: "ThisExpr") -> None:
+        if self._current_class == ClassType.NONE:
+            raise JloxSyntaxError(expr.keyword, "Can't access this outside method.")
+
+        self._resolve_local(expr, expr.keyword)
+
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         self._resolve_expr(stmt.expression)
 
@@ -87,6 +107,11 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
             raise JloxSyntaxError(stmt.keyword, "Can't return from top-level code.")
 
         if stmt.value is not None:
+            if self._current_function == FunctionType.INITIALIZER:
+                raise JloxSyntaxError(
+                    stmt.keyword, "Can't return value from class initializer."
+                )
+
             self._resolve_expr(stmt.value)
 
     def visitVarStmt(self, stmt: "VarStmt") -> None:
@@ -118,6 +143,28 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
         self._define(stmt.name)
 
         self._resolve_function(stmt, FunctionType.FUNCTION)
+
+    def visitClassStmt(self, stmt: "ClassStmt") -> None:
+        enclosing_class = self._current_class
+        self._current_class = ClassType.CLASS
+
+        self._declare(stmt.name)
+        self._define(stmt.name)
+
+        self._begin_scope()
+        self._scopes[-1]["this"] = True
+
+        for method in stmt.methods:
+            ftype = (
+                FunctionType.INITIALIZER
+                if method.name.lexeme == "init"
+                else FunctionType.METHOD
+            )
+            self._resolve_function(method, ftype)
+
+        self._end_scope()
+
+        self._current_class = enclosing_class
 
     def _resolve_stmts(self, stmts: Sequence[Stmt]) -> None:
         for stmt in stmts:

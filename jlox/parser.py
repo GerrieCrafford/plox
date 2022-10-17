@@ -4,13 +4,17 @@ from jlox.expression import (
     BinaryExpr,
     CallExpr,
     Expr,
+    GetExpr,
     GroupingExpr,
     LiteralExpr,
     LogicalExpr,
+    SetExpr,
+    ThisExpr,
     UnaryExpr,
     VariableExpr,
 )
 from jlox.statement import (
+    ClassStmt,
     ExpressionStmt,
     FunctionStmt,
     IfStmt,
@@ -39,6 +43,8 @@ class Parser:
     def _declaration(self) -> Stmt:
         if self._match(TokenType.VAR):
             return self._var_declaration()
+        if self._match(TokenType.CLASS):
+            return self._class_declaration()
         if self._match(TokenType.FUN):
             return self._function_declaration("function")
 
@@ -54,7 +60,19 @@ class Parser:
         self._consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
         return VarStmt(name, initializer)
 
-    def _function_declaration(self, kind: str) -> Stmt:
+    def _class_declaration(self) -> ClassStmt:
+        name = self._consume(TokenType.IDENTIFIER, "Expect class name.")
+        self._consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
+
+        methods: list[FunctionStmt] = []
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            methods.append(self._function_declaration("method"))
+
+        self._consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
+
+        return ClassStmt(name, methods)
+
+    def _function_declaration(self, kind: str) -> FunctionStmt:
         name = self._consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
         self._consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
 
@@ -195,6 +213,8 @@ class Parser:
             if isinstance(expr, VariableExpr):
                 name: Token = expr.name
                 return AssignExpr(name, value)
+            elif isinstance(expr, GetExpr):
+                return SetExpr(expr.name, expr.object, value)
 
             raise JloxSyntaxError(equals, "Invalid assignment target.")
 
@@ -279,6 +299,11 @@ class Parser:
         while True:
             if self._match(TokenType.LEFT_PAREN):
                 expr = self._finish_call(expr)
+            elif self._match(TokenType.DOT):
+                property = self._consume(
+                    TokenType.IDENTIFIER, "Expect identifier after '.'"
+                )
+                expr = GetExpr(property, expr)
             else:
                 break
 
@@ -317,6 +342,9 @@ class Parser:
             expr = self._expression()
             self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression")
             return GroupingExpr(expr)
+
+        if self._match(TokenType.THIS):
+            return ThisExpr(self._previous())
 
         if self._match(TokenType.IDENTIFIER):
             return VariableExpr(self._previous())

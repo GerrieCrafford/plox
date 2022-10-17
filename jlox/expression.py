@@ -30,6 +30,15 @@ class ExprVisitor(Protocol[T]):
     def visitCallExpr(self, expr: "CallExpr") -> T:
         ...
 
+    def visitGetExpr(self, expr: "GetExpr") -> T:
+        ...
+
+    def visitSetExpr(self, expr: "SetExpr") -> T:
+        ...
+
+    def visitThisExpr(self, expr: "ThisExpr") -> T:
+        ...
+
 
 V = TypeVar("V")
 
@@ -165,6 +174,54 @@ class CallExpr(Expr):
 
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitCallExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
+
+@dataclass
+class GetExpr(Expr):
+    name: Token
+    object: Expr
+
+    def accept(self, visitor: ExprVisitor[V]) -> V:
+        return visitor.visitGetExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
+
+@dataclass
+class SetExpr(Expr):
+    name: Token
+    object: Expr
+    value: Expr
+
+    def accept(self, visitor: ExprVisitor[V]) -> V:
+        return visitor.visitSetExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
+
+@dataclass
+class ThisExpr(Expr):
+    keyword: Token
+
+    def accept(self, visitor: ExprVisitor[V]) -> V:
+        return visitor.visitThisExpr(self)
 
     def __hash__(self) -> int:
         """

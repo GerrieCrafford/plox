@@ -1,10 +1,12 @@
+from typing import Sequence
 import pytest
 
-from jlox.expression import CallExpr, LiteralExpr, VariableExpr, Expr
+from jlox.expression import CallExpr, GetExpr, LiteralExpr, SetExpr, VariableExpr, Expr
 from jlox.interpreter import Interpreter
 from jlox.resolver import Resolver
 from jlox.statement import (
     BlockStmt,
+    ClassStmt,
     ExpressionStmt,
     FunctionStmt,
     ReturnStmt,
@@ -83,6 +85,32 @@ def test_closure_variable_capturing(interpreter: Interpreter):
                     LiteralExpr("global"),
                 ),
             ]
+        ),
+    ]
+
+    resolver.resolve(statements)
+    interpreter.interpret(statements)
+
+
+def test_instance_getter(interpreter: Interpreter):
+    resolver = Resolver(interpreter)
+
+    statements: list[Stmt] = [
+        ClassStmt(name("TestClass"), []),
+        VarStmt(
+            name("instance"),
+            CallExpr(VariableExpr(name("TestClass")), closing_paren(), []),
+        ),
+        ExpressionStmt(
+            SetExpr(
+                name("instance_var"),
+                VariableExpr(name("instance")),
+                LiteralExpr("value"),
+            )
+        ),
+        lox_assert(
+            GetExpr(name("instance_var"), VariableExpr(name("instance"))),
+            LiteralExpr("value"),
         ),
     ]
 

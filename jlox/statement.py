@@ -33,6 +33,9 @@ class StmtVisitor(Protocol[T]):
     def visitReturnStmt(self, stmt: "ReturnStmt") -> T:
         ...
 
+    def visitClassStmt(self, stmt: "ClassStmt") -> T:
+        ...
+
 
 V = TypeVar("V")
 
@@ -111,3 +114,12 @@ class ReturnStmt(Stmt):
 
     def accept(self, visitor: StmtVisitor[V]) -> V:
         return visitor.visitReturnStmt(self)
+
+
+@dataclass
+class ClassStmt(Stmt):
+    name: Token
+    methods: Sequence[FunctionStmt]
+
+    def accept(self, visitor: StmtVisitor[V]) -> V:
+        return visitor.visitClassStmt(self)
