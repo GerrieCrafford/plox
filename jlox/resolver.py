@@ -9,6 +9,7 @@ from jlox.expression import (
     LiteralExpr,
     LogicalExpr,
     SetExpr,
+    SuperExpr,
     ThisExpr,
     UnaryExpr,
     VariableExpr,
@@ -31,7 +32,7 @@ from jlox.statement import (
 )
 from jlox.tokens import Token
 from jlox.lox_class import ClassType
-from jlox.errors import JloxSyntaxError
+from jlox.errors import JloxRuntimeError, JloxSyntaxError
 
 
 class Resolver(StmtVisitor[None], ExprVisitor[Any]):
@@ -99,6 +100,21 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
 
         self._resolve_local(expr, expr.keyword)
 
+    def visitSuperExpr(self, expr: "SuperExpr") -> None:
+        match self._current_class:
+            case ClassType.NONE:
+                raise JloxSyntaxError(
+                    expr.keyword, "Can't use 'super' outside of a class."
+                )
+            case ClassType.CLASS:
+                raise JloxSyntaxError(
+                    expr.keyword, "Can't use 'super' in a class with no superclass."
+                )
+            case _:
+                pass
+
+        self._resolve_local(expr, expr.keyword)
+
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         self._resolve_expr(stmt.expression)
 
@@ -151,6 +167,19 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
         self._declare(stmt.name)
         self._define(stmt.name)
 
+        if stmt.superclass and stmt.name.lexeme == stmt.superclass.name.lexeme:
+            raise JloxSyntaxError(
+                stmt.superclass.name, "A class can't inherit from itself."
+            )
+
+        if stmt.superclass:
+            self._current_class = ClassType.SUBCLASS
+            self._resolve_expr(stmt.superclass)
+
+        if stmt.superclass:
+            self._begin_scope()
+            self._scopes[-1]["super"] = True
+
         self._begin_scope()
         self._scopes[-1]["this"] = True
 
@@ -163,6 +192,9 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
             self._resolve_function(method, ftype)
 
         self._end_scope()
+
+        if stmt.superclass:
+            self._end_scope()
 
         self._current_class = enclosing_class
 

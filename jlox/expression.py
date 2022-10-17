@@ -39,6 +39,9 @@ class ExprVisitor(Protocol[T]):
     def visitThisExpr(self, expr: "ThisExpr") -> T:
         ...
 
+    def visitSuperExpr(self, expr: "SuperExpr") -> T:
+        ...
+
 
 V = TypeVar("V")
 
@@ -222,6 +225,22 @@ class ThisExpr(Expr):
 
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitThisExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
+
+@dataclass
+class SuperExpr(Expr):
+    keyword: Token
+    method: Token
+
+    def accept(self, visitor: ExprVisitor[V]) -> V:
+        return visitor.visitSuperExpr(self)
 
     def __hash__(self) -> int:
         """

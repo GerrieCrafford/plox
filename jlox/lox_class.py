@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from jlox.interpreter import Interpreter
@@ -12,11 +12,18 @@ from jlox.lox_function import LoxFunction
 class ClassType(Enum):
     NONE = 0
     CLASS = 1
+    SUBCLASS = 2
 
 
 class LoxClass(LoxCallable):
-    def __init__(self, name: str, methods: dict[str, LoxFunction]) -> None:
+    def __init__(
+        self,
+        name: str,
+        superclass: Optional["LoxClass"],
+        methods: dict[str, LoxFunction],
+    ) -> None:
         self._name = name
+        self._superclass = superclass
         self._methods = methods
 
     def call(self, interpreter: "Interpreter", arguments: list[Any]) -> Any | None:
@@ -29,7 +36,11 @@ class LoxClass(LoxCallable):
         return instance
 
     def find_method(self, name: str) -> LoxFunction | None:
-        return self._methods.get(name, None)
+        if name in self._methods:
+            return self._methods[name]
+
+        if self._superclass:
+            return self._superclass.find_method(name)
 
     @property
     def arity(self) -> int:

@@ -10,6 +10,7 @@ from jlox.expression import (
     LiteralExpr,
     LogicalExpr,
     SetExpr,
+    SuperExpr,
     ThisExpr,
     UnaryExpr,
     VariableExpr,
@@ -36,6 +37,14 @@ from jlox.errors import JloxRuntimeError
 from jlox.lox_callable import LoxCallable
 from jlox.native_functions import AssertEqualFunc, ClockFunc
 from jlox.return_wrapper import ReturnWrapper
+
+
+def super_token():
+    return Token(TokenType.SUPER, "super", None, 0)
+
+
+def this_token():
+    return Token(TokenType.THIS, "this", None, 0)
 
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
@@ -174,6 +183,19 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     def visitThisExpr(self, expr: "ThisExpr") -> Any:
         return self._lookup_var(expr.keyword, expr)
 
+    def visitSuperExpr(self, expr: "SuperExpr") -> LoxFunction:
+        dist = self._locals.get(expr)
+        assert dist is not None
+
+        superclass: LoxClass = self._environment.get_at(dist, super_token())
+        object: LoxInstance = self._environment.get_at(dist - 1, this_token())
+
+        method = superclass.find_method(expr.method.lexeme)
+        if not method:
+            raise RuntimeError(expr.method, f"Undefined property {expr.method.lexeme}.")
+
+        return method.bind(object)
+
     def visitCallExpr(self, expr: "CallExpr") -> Any:
         callee = self._evaluate(expr.callee)
 
@@ -222,7 +244,17 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         self._environment.define(stmt.name.lexeme, func)
 
     def visitClassStmt(self, stmt: "ClassStmt") -> None:
+        superclass = None
+        if stmt.superclass:
+            superclass = self._evaluate(stmt.superclass)
+            if not isinstance(superclass, LoxClass):
+                raise RuntimeError(stmt.superclass.name, "Superclass must be a class.")
+
         self._environment.define(stmt.name.lexeme, None)
+
+        if stmt.superclass:
+            self._environment = Environment(self._environment)
+            self._environment.define("super", superclass)
 
         methods: dict[str, LoxFunction] = {}
         for method in stmt.methods:
@@ -231,7 +263,11 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
             )
             methods[method.name.lexeme] = function
 
-        lox_class = LoxClass(stmt.name.lexeme, methods)
+        lox_class = LoxClass(stmt.name.lexeme, superclass, methods)
+
+        if superclass:
+            assert self._environment.enclosing is not None
+            self._environment = self._environment.enclosing
 
         self._environment.assign(stmt.name, lox_class)
 

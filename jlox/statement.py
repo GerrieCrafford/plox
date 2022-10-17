@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Protocol, Sequence, TypeVar
 
-from jlox.expression import Expr
+from jlox.expression import Expr, VariableExpr
 from jlox.tokens import Token
 
 
@@ -119,6 +119,7 @@ class ReturnStmt(Stmt):
 @dataclass
 class ClassStmt(Stmt):
     name: Token
+    superclass: VariableExpr | None
     methods: Sequence[FunctionStmt]
 
     def accept(self, visitor: StmtVisitor[V]) -> V:

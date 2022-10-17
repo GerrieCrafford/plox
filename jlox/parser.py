@@ -9,6 +9,7 @@ from jlox.expression import (
     LiteralExpr,
     LogicalExpr,
     SetExpr,
+    SuperExpr,
     ThisExpr,
     UnaryExpr,
     VariableExpr,
@@ -62,6 +63,12 @@ class Parser:
 
     def _class_declaration(self) -> ClassStmt:
         name = self._consume(TokenType.IDENTIFIER, "Expect class name.")
+
+        superclass: VariableExpr | None = None
+        if self._match(TokenType.LESS):
+            identifier = self._consume(TokenType.IDENTIFIER, "Expect superclass name.")
+            superclass = VariableExpr(identifier)
+
         self._consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
 
         methods: list[FunctionStmt] = []
@@ -70,7 +77,7 @@ class Parser:
 
         self._consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
 
-        return ClassStmt(name, methods)
+        return ClassStmt(name, superclass, methods)
 
     def _function_declaration(self, kind: str) -> FunctionStmt:
         name = self._consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
@@ -345,6 +352,15 @@ class Parser:
 
         if self._match(TokenType.THIS):
             return ThisExpr(self._previous())
+
+        if self._match(TokenType.SUPER):
+            keyword = self._previous()
+            self._consume(TokenType.DOT, "Expect '.' after super.")
+            method = self._consume(
+                TokenType.IDENTIFIER, "Expect identifier after super."
+            )
+
+            return SuperExpr(keyword, method)
 
         if self._match(TokenType.IDENTIFIER):
             return VariableExpr(self._previous())
