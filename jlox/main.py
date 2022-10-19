@@ -5,8 +5,7 @@ from jlox.interpreter import Interpreter
 from jlox.scanner import Scanner
 from jlox.parser import Parser
 from jlox.resolver import Resolver
-
-had_error = [False]
+from jlox.errors import JloxRuntimeError, JloxSyntaxError
 
 
 def get_args():
@@ -18,29 +17,25 @@ def get_args():
     return parser.parse_args()
 
 
-def report(line: int, where: str, message: str) -> None:
-    print(f"[line {line}] Error{where}: {message}")
-    had_error[0] = True
-
-
-def error(line: int, message: str) -> None:
-    report(line, "", message)
-
-
 def run(source: str, interpreter: Interpreter) -> None:
-    scanner = Scanner(source)
-    tokens = scanner.scan_tokens()
+    try:
+        scanner = Scanner(source)
+        tokens = scanner.scan_tokens()
 
-    parser = Parser(tokens)
-    statements = parser.parse()
+        parser = Parser(tokens)
+        statements = parser.parse()
 
-    if not statements:
-        return
+        if not statements:
+            return
 
-    resolver = Resolver(interpreter)
-    resolver.resolve(statements)
+        resolver = Resolver(interpreter)
+        resolver.resolve(statements)
 
-    interpreter.interpret(statements)
+        interpreter.interpret(statements)
+    except JloxRuntimeError as e:
+        print(f"Runtime error: {e}")
+    except JloxSyntaxError as e:
+        print(f"Syntax error: {e}")
 
 
 def run_file(file: str) -> None:
@@ -51,16 +46,12 @@ def run_file(file: str) -> None:
 
     run(script, interpreter)
 
-    if had_error[0]:
-        sys.exit(65)
-
 
 def run_prompt() -> None:
     interpreter = Interpreter()
     try:
         while (line := input("> ")) != "q":
             run(line, interpreter)
-            had_error[0] = False
     except (KeyboardInterrupt, EOFError):
         pass
 

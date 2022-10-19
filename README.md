@@ -4,7 +4,7 @@ A Python implementation of the Lox language following Nystrom's excellent book, 
 
 ## Roadmap
 
-* [ ] Better error handling (don't crash the REPL when an error occurs, print multiple errors if there are multiple)
+* [x] Better error handling (don't crash the REPL when an error occurs, print multiple errors if there are multiple)
 
 * [ ] Block comments
 * [ ] Comma expressions
@@ -17,3 +17,4 @@ A Python implementation of the Lox language following Nystrom's excellent book, 
 * [ ] Add user-defined getters and setters
 * [ ] Add multiple inheritance
 * [ ] Add imports
+* [ ] Report multiple errors instead of breaking on first
