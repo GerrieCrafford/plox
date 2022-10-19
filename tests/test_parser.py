@@ -6,7 +6,9 @@ from jlox.expression import (
     CommaExpr,
     Expr,
     GroupingExpr,
+    IfElseExpr,
     LiteralExpr,
+    LogicalExpr,
     UnaryExpr,
     VariableExpr,
 )
@@ -303,3 +305,29 @@ def test_comma_expression():
         VariableExpr(id_token("x")), token(TT.PLUS, "+"), LiteralExpr(5)
     )
     assert statement.expression.right == LiteralExpr(5)
+
+
+def test_ternary_operator():
+    tokens = [
+        Token(TokenType.IDENTIFIER, "x", None, 1),
+        Token(TokenType.GREATER, ">", None, 1),
+        Token(TokenType.NUMBER, "5", 5, 1),
+        Token(TokenType.QUESTION_MARK, "?", None, 1),
+        Token(TokenType.IDENTIFIER, "z", None, 1),
+        Token(TokenType.COLON, ":", None, 1),
+        Token(TokenType.NUMBER, "10", 10, 1),
+        Token(TokenType.SEMICOLON, ";", None, 1),
+        Token(TokenType.EOF, "", None, 1),
+    ]
+
+    p = Parser(tokens)
+
+    [statement] = p.parse()
+
+    assert isinstance(statement, ExpressionStmt)
+    assert isinstance(statement.expression, IfElseExpr)
+    assert statement.expression.conditional == BinaryExpr(
+        VariableExpr(id_token("x")), token(TT.GREATER), LiteralExpr(5)
+    )
+    assert statement.expression.then_expr == VariableExpr(id_token("z"))
+    assert statement.expression.else_expr == LiteralExpr(10)

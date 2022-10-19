@@ -8,7 +8,7 @@ A Python implementation of the Lox language following Nystrom's excellent book, 
 
 * [x] Block comments
 * [x] Comma expressions
-* [ ] Ternary operator
+* [x] Ternary operator
 * [ ] String coercion with concatenation operator
 * [ ] Let REPL print expression value and execute statement
 * [ ] Add break statements

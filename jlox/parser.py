@@ -7,6 +7,7 @@ from jlox.expression import (
     Expr,
     GetExpr,
     GroupingExpr,
+    IfElseExpr,
     LiteralExpr,
     LogicalExpr,
     SetExpr,
@@ -218,7 +219,7 @@ class Parser:
         return assignment
 
     def _assignment(self) -> Expr:
-        expr = self._or()
+        expr = self._ternary()
 
         if self._match(TokenType.EQUAL):
             equals = self._previous()
@@ -231,6 +232,17 @@ class Parser:
                 return SetExpr(expr.name, expr.object, value)
 
             raise JloxSyntaxError(equals, "Invalid assignment target.")
+
+        return expr
+
+    def _ternary(self) -> Expr:
+        expr = self._or()
+
+        if self._match(TokenType.QUESTION_MARK):
+            then_expr = self._or()
+            self._consume(TokenType.COLON, "Expect ':' after '?'s first branch.")
+            else_expr = self._or()
+            return IfElseExpr(expr, then_expr, else_expr)
 
         return expr
 

@@ -65,6 +65,10 @@ class Scanner:
                 self._add_token(TokenType.SEMICOLON)
             case TokenType.STAR.value:
                 self._add_token(TokenType.STAR)
+            case TokenType.QUESTION_MARK.value:
+                self._add_token(TokenType.QUESTION_MARK)
+            case TokenType.COLON.value:
+                self._add_token(TokenType.COLON)
             case TokenType.BANG.value:
                 self._add_token(
                     TokenType.BANG_EQUAL
@@ -96,11 +100,14 @@ class Scanner:
                         self._advance()
                 elif self._match(TokenType.STAR.value):
                     # Block comment goes to */
-                    while (self._peek(), self._peek_next()) != ('*', '/') and not self._is_at_end():
-                        if self._peek() == '\n':
+                    while (self._peek(), self._peek_next()) != (
+                        "*",
+                        "/",
+                    ) and not self._is_at_end():
+                        if self._peek() == "\n":
                             self._line += 1
                         self._advance()
-                    
+
                     if not self._is_at_end():
                         # Consume * and /
                         self._advance()

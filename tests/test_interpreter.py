@@ -2,9 +2,11 @@ from typing import Sequence
 import pytest
 
 from jlox.expression import (
+    BinaryExpr,
     CallExpr,
     CommaExpr,
     GetExpr,
+    IfElseExpr,
     LiteralExpr,
     SetExpr,
     VariableExpr,
@@ -131,6 +133,44 @@ def test_comma_expr(interpreter: Interpreter):
 
     statements: list[Stmt] = [
         lox_assert(CommaExpr(LiteralExpr(5), LiteralExpr("a")), LiteralExpr("a"))
+    ]
+
+    resolver.resolve(statements)
+    interpreter.interpret(statements)
+
+
+def test_ternary_operator(interpreter: Interpreter):
+    resolver = Resolver(interpreter)
+
+    statements: list[Stmt] = [
+        VarStmt(
+            name("x"),
+            IfElseExpr(
+                BinaryExpr(
+                    LiteralExpr(5), Token(TokenType.LESS, "<", None, 0), LiteralExpr(10)
+                ),
+                LiteralExpr(7),
+                LiteralExpr("b"),
+            ),
+        ),
+        VarStmt(
+            name("y"),
+            IfElseExpr(
+                BinaryExpr(
+                    VariableExpr(name("x")),
+                    Token(TokenType.EQUAL_EQUAL, "==", None, 1),
+                    LiteralExpr("c"),
+                ),
+                LiteralExpr(0),
+                BinaryExpr(
+                    VariableExpr(name("x")),
+                    Token(TokenType.PLUS, "+", None, 1),
+                    LiteralExpr(4),
+                ),
+            ),
+        ),
+        lox_assert(VariableExpr(name("x")), LiteralExpr(7)),
+        lox_assert(VariableExpr(name("y")), LiteralExpr(7 + 4)),
     ]
 
     resolver.resolve(statements)

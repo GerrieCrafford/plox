@@ -15,6 +15,7 @@ from jlox.expression import (
     UnaryExpr,
     VariableExpr,
     GetExpr,
+    IfElseExpr,
 )
 from jlox.interpreter import Interpreter
 from jlox.lox_function import FunctionType
@@ -119,6 +120,11 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
     def visitCommaExpr(self, expr: "CommaExpr") -> None:
         self._resolve_expr(expr.left)
         self._resolve_expr(expr.right)
+
+    def visitIfElseExpr(self, expr: "IfElseExpr") -> None:
+        self._resolve_expr(expr.conditional)
+        self._resolve_expr(expr.then_expr)
+        self._resolve_expr(expr.else_expr)
 
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         self._resolve_expr(stmt.expression)

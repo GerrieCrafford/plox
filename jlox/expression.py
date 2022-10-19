@@ -45,6 +45,9 @@ class ExprVisitor(Protocol[T]):
     def visitCommaExpr(self, expr: "CommaExpr") -> T:
         ...
 
+    def visitIfElseExpr(self, expr: "IfElseExpr") -> T:
+        ...
+
 
 V = TypeVar("V")
 
@@ -260,6 +263,23 @@ class CommaExpr(Expr):
 
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitCommaExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
+
+@dataclass
+class IfElseExpr(Expr):
+    conditional: Expr
+    then_expr: Expr
+    else_expr: Expr
+
+    def accept(self, visitor: ExprVisitor[V]) -> V:
+        return visitor.visitIfElseExpr(self)
 
     def __hash__(self) -> int:
         """

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 LiteralType = str | float
 
+
 class TokenType(Enum):
     # Single char tokens
     LEFT_PAREN = "("
@@ -17,6 +18,8 @@ class TokenType(Enum):
     SEMICOLON = ";"
     SLASH = "/"
     STAR = "*"
+    QUESTION_MARK = "?"
+    COLON = ":"
 
     # 1/2 char tokens
     BANG = "!"
