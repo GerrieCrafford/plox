@@ -4,6 +4,7 @@ from jlox.expression import (
     AssignExpr,
     BinaryExpr,
     CallExpr,
+    CommaExpr,
     Expr,
     ExprVisitor,
     GroupingExpr,
@@ -211,6 +212,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
             )
 
         return callee.call(self, arguments)
+
+    def visitCommaExpr(self, expr: "CommaExpr") -> Any:
+        _, right = self._evaluate(expr.left), self._evaluate(expr.right)
+        return right
 
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         value = self._evaluate(stmt.expression)

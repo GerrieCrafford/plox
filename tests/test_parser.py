@@ -3,6 +3,7 @@ from jlox.expression import (
     AssignExpr,
     BinaryExpr,
     CallExpr,
+    CommaExpr,
     Expr,
     GroupingExpr,
     LiteralExpr,
@@ -278,3 +279,27 @@ def test_call_expression_with_chained_call():
         VariableExpr(my_func_token), my_func_paren, []
     )
     assert statement.expression.arguments == [LiteralExpr(5)]
+
+
+def test_comma_expression():
+    tokens = [
+        Token(TokenType.IDENTIFIER, "x", None, 1),
+        Token(TokenType.PLUS, "+", None, 1),
+        Token(TokenType.NUMBER, "5", 5, 1),
+        Token(TokenType.COMMA, ",", None, 1),
+        Token(TokenType.NUMBER, "5", 5, 1),
+        Token(TokenType.SEMICOLON, ";", None, 1),
+        Token(TokenType.EOF, "", None, 1),
+    ]
+
+    p = Parser(tokens)
+
+    [statement] = p.parse()
+
+    assert isinstance(statement, ExpressionStmt)
+    assert isinstance(statement.expression, CommaExpr)
+
+    assert statement.expression.left == BinaryExpr(
+        VariableExpr(id_token("x")), token(TT.PLUS, "+"), LiteralExpr(5)
+    )
+    assert statement.expression.right == LiteralExpr(5)

@@ -1,7 +1,15 @@
 from typing import Sequence
 import pytest
 
-from jlox.expression import CallExpr, GetExpr, LiteralExpr, SetExpr, VariableExpr, Expr
+from jlox.expression import (
+    CallExpr,
+    CommaExpr,
+    GetExpr,
+    LiteralExpr,
+    SetExpr,
+    VariableExpr,
+    Expr,
+)
 from jlox.interpreter import Interpreter
 from jlox.resolver import Resolver
 from jlox.statement import (
@@ -112,6 +120,17 @@ def test_instance_getter(interpreter: Interpreter):
             GetExpr(name("instance_var"), VariableExpr(name("instance"))),
             LiteralExpr("value"),
         ),
+    ]
+
+    resolver.resolve(statements)
+    interpreter.interpret(statements)
+
+
+def test_comma_expr(interpreter: Interpreter):
+    resolver = Resolver(interpreter)
+
+    statements: list[Stmt] = [
+        lox_assert(CommaExpr(LiteralExpr(5), LiteralExpr("a")), LiteralExpr("a"))
     ]
 
     resolver.resolve(statements)

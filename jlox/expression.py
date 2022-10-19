@@ -42,6 +42,9 @@ class ExprVisitor(Protocol[T]):
     def visitSuperExpr(self, expr: "SuperExpr") -> T:
         ...
 
+    def visitCommaExpr(self, expr: "CommaExpr") -> T:
+        ...
+
 
 V = TypeVar("V")
 
@@ -241,6 +244,22 @@ class SuperExpr(Expr):
 
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitSuperExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
+
+@dataclass
+class CommaExpr(Expr):
+    left: Expr
+    right: Expr
+
+    def accept(self, visitor: ExprVisitor[V]) -> V:
+        return visitor.visitCommaExpr(self)
 
     def __hash__(self) -> int:
         """

@@ -3,6 +3,7 @@ from jlox.expression import (
     AssignExpr,
     BinaryExpr,
     CallExpr,
+    CommaExpr,
     Expr,
     GetExpr,
     GroupingExpr,
@@ -208,7 +209,13 @@ class Parser:
         return ExpressionStmt(expr)
 
     def _expression(self) -> Expr:
-        return self._assignment()
+        assignment = self._assignment()
+
+        if self._match(TokenType.COMMA):
+            right = self._expression()
+            return CommaExpr(assignment, right)
+
+        return assignment
 
     def _assignment(self) -> Expr:
         expr = self._or()
@@ -304,6 +311,8 @@ class Parser:
         expr = self._primary()
 
         while True:
+            if self._is_at_end():
+                break
             if self._match(TokenType.LEFT_PAREN):
                 expr = self._finish_call(expr)
             elif self._match(TokenType.DOT):

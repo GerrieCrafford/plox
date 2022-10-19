@@ -3,6 +3,7 @@ from jlox.expression import (
     AssignExpr,
     BinaryExpr,
     CallExpr,
+    CommaExpr,
     Expr,
     ExprVisitor,
     GroupingExpr,
@@ -114,6 +115,10 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
                 pass
 
         self._resolve_local(expr, expr.keyword)
+
+    def visitCommaExpr(self, expr: "CommaExpr") -> None:
+        self._resolve_expr(expr.left)
+        self._resolve_expr(expr.right)
 
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         self._resolve_expr(stmt.expression)
