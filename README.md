@@ -6,7 +6,7 @@ A Python implementation of the Lox language following Nystrom's excellent book, 
 
 * [x] Better error handling (don't crash the REPL when an error occurs, print multiple errors if there are multiple)
 
-* [ ] Block comments
+* [x] Block comments
 * [ ] Comma expressions
 * [ ] Ternary operator
 * [ ] String coercion with concatenation operator
