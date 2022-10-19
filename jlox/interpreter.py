@@ -96,6 +96,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
                 return l / r
             case TokenType.STAR, float(l) | int(l), float(r) | int(r):
                 return l * r
+            case TokenType.PLUS, int(l), str(r):
+                return str(l) + r
+            case TokenType.PLUS, str(l), int(r):
+                return l + str(r)
             case TokenType.PLUS, float(l) | int(l), float(r) | int(r):
                 return l + r
             case TokenType.PLUS, str(l), str(r):

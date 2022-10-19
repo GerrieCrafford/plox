@@ -9,7 +9,7 @@ A Python implementation of the Lox language following Nystrom's excellent book, 
 * [x] Block comments
 * [x] Comma expressions
 * [x] Ternary operator
-* [ ] String coercion with concatenation operator
+* [x] String coercion with concatenation operator
 * [ ] Let REPL print expression value and execute statement
 * [ ] Add break statements
 * [ ] Add anonymous functions

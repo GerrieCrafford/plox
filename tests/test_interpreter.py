@@ -175,3 +175,24 @@ def test_ternary_operator(interpreter: Interpreter):
 
     resolver.resolve(statements)
     interpreter.interpret(statements)
+
+
+def test_string_concat_coercion(interpreter: Interpreter):
+    resolver = Resolver(interpreter)
+
+    def plus():
+        return Token(TokenType.PLUS, "+", None, 0)
+
+    statements: list[Stmt] = [
+        lox_assert(
+            BinaryExpr(LiteralExpr("hello "), plus(), LiteralExpr(5)),
+            LiteralExpr("hello 5"),
+        ),
+        lox_assert(
+            BinaryExpr(LiteralExpr(4), plus(), LiteralExpr(" hello")),
+            LiteralExpr("4 hello"),
+        ),
+    ]
+
+    resolver.resolve(statements)
+    interpreter.interpret(statements)
