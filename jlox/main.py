@@ -48,7 +48,7 @@ def run_file(file: str) -> None:
 
 
 def run_prompt() -> None:
-    interpreter = Interpreter()
+    interpreter = Interpreter(True)
     try:
         while (line := input("> ")) != "q":
             run(line, interpreter)

@@ -50,7 +50,7 @@ def this_token():
 
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
-    def __init__(self):
+    def __init__(self, repl: bool = False):
         self._globals = Environment()
         self._environment = self._globals
 
@@ -58,6 +58,8 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         self._globals.define("assert_equal", AssertEqualFunc())
 
         self._locals: dict[Expr, int] = {}
+
+        self._repl = repl
 
     @property
     def globals(self) -> Environment:
@@ -151,7 +153,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         return value
 
     def visitExpressionStmt(self, stmt: "ExpressionStmt") -> None:
-        self._evaluate(stmt.expression)
+        ret = self._evaluate(stmt.expression)
+
+        if ret is not None and self._repl:
+            print(ret)
 
     def visitVariableExpr(self, expr: "VariableExpr") -> Any:
         return self._lookup_var(expr.name, expr)
