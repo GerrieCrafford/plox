@@ -18,3 +18,5 @@ A Python implementation of the Lox language following Nystrom's excellent book, 
 * [ ] Add multiple inheritance
 * [ ] Add imports
 * [ ] Report multiple errors instead of breaking on first
+
+* [ ] Github actions
