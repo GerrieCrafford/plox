@@ -62,6 +62,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         self._locals: dict[Expr, int] = {}
 
         self._repl = repl
+        self._root_stmt: Stmt | None = None
 
     @property
     def globals(self) -> Environment:
@@ -69,6 +70,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
     def interpret(self, statements: list[Stmt]):
         for stmt in statements:
+            self._root_stmt = stmt
             self._execute(stmt)
 
     def visitLiteralExpr(self, expr: LiteralExpr) -> Any:
@@ -157,7 +159,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     def visitExpressionStmt(self, stmt: "ExpressionStmt") -> None:
         ret = self._evaluate(stmt.expression)
 
-        if ret is not None and self._repl:
+        if ret is not None and self._repl and stmt == self._root_stmt:
             print(ret)
 
     def visitVariableExpr(self, expr: "VariableExpr") -> Any:
