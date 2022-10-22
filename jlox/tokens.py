@@ -54,6 +54,7 @@ class TokenType(Enum):
     VAR = "var"
     WHILE = "while"
     EOF = "eof"
+    BREAK = "break"
 
 
 @dataclass

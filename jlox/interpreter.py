@@ -23,6 +23,7 @@ from jlox.lox_function import LoxFunction
 from jlox.lox_instance import LoxInstance
 from jlox.tokens import Token, TokenType
 from jlox.statement import (
+    BreakStmt,
     ClassStmt,
     FunctionStmt,
     ReturnStmt,
@@ -38,7 +39,7 @@ from jlox.statement import (
 from jlox.errors import JloxRuntimeError
 from jlox.lox_callable import LoxCallable
 from jlox.native_functions import AssertEqualFunc, ClockFunc
-from jlox.return_wrapper import ReturnWrapper
+from jlox.exception_wrappers import ReturnWrapper, BreakWrapper
 
 
 def super_token():
@@ -259,8 +260,11 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
             self._execute(stmt.else_branch)
 
     def visitWhileStmt(self, stmt: "WhileStmt") -> None:
-        while self._evaluate(stmt.condition):
-            self._execute(stmt.loop_body)
+        try:
+            while self._evaluate(stmt.condition):
+                self._execute(stmt.loop_body)
+        except BreakWrapper:
+            pass
 
     def visitFunctionStmt(self, stmt: "FunctionStmt") -> None:
         func = LoxFunction(stmt, self._environment)
@@ -293,6 +297,9 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
             self._environment = self._environment.enclosing
 
         self._environment.assign(stmt.name, lox_class)
+
+    def visitBreakStmt(self, stmt: "BreakStmt") -> None:
+        raise BreakWrapper()
 
     def resolve(self, expr: Expr, depth: int):
         self._locals[expr] = depth

@@ -8,3 +8,7 @@ class ReturnWrapper(Exception):
         super().__init__()
 
         self.value = value
+
+
+class BreakWrapper(Exception):
+    pass

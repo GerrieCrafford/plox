@@ -11,7 +11,7 @@ A Python implementation of the Lox language following Nystrom's excellent book, 
 * [x] Ternary operator
 * [x] String coercion with concatenation operator
 * [x] Let REPL print expression value and execute statement
-* [ ] Add break statements
+* [x] Add break statements
 * [ ] Add anonymous functions
 * [ ] Add static class methods
 * [ ] Add user-defined getters and setters

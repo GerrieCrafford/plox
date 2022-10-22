@@ -13,7 +13,16 @@ from jlox.expression import (
     VariableExpr,
 )
 from jlox.parser import Parser
-from jlox.statement import ExpressionStmt, FunctionStmt, PrintStmt, VarStmt, BlockStmt
+from jlox.statement import (
+    BreakStmt,
+    ExpressionStmt,
+    FunctionStmt,
+    IfStmt,
+    PrintStmt,
+    VarStmt,
+    BlockStmt,
+    WhileStmt,
+)
 from jlox.tokens import Token, TokenType
 
 TT = TokenType
@@ -331,3 +340,36 @@ def test_ternary_operator():
     )
     assert statement.expression.then_expr == VariableExpr(id_token("z"))
     assert statement.expression.else_expr == LiteralExpr(10)
+
+
+def test_break_statement():
+    tokens = [
+        token(TT.WHILE),
+        token(TT.LEFT_PAREN),
+        token(TT.TRUE),
+        token(TT.RIGHT_PAREN),
+        token(TT.LEFT_BRACE),
+        token(TT.IF),
+        token(TT.LEFT_PAREN),
+        id_token("some_var"),
+        token(TT.EQUAL_EQUAL),
+        float_token(5),
+        token(TT.RIGHT_PAREN),
+        token(TT.LEFT_BRACE),
+        token(TT.BREAK),
+        token(TT.RIGHT_BRACE),
+        token(TT.RIGHT_BRACE),
+        token(TT.EOF),
+    ]
+
+    p = Parser(tokens)
+
+    [statement] = p.parse()
+
+    assert isinstance(statement, WhileStmt)
+    assert isinstance(statement.loop_body, BlockStmt)
+    assert isinstance(statement.loop_body.statements[0], IfStmt)
+    assert isinstance(statement.loop_body.statements[0].then_branch, BlockStmt)
+    assert isinstance(
+        statement.loop_body.statements[0].then_branch.statements[0], BreakStmt
+    )

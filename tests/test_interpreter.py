@@ -2,6 +2,7 @@ from typing import Sequence
 import pytest
 
 from jlox.expression import (
+    AssignExpr,
     BinaryExpr,
     CallExpr,
     CommaExpr,
@@ -16,12 +17,15 @@ from jlox.interpreter import Interpreter
 from jlox.resolver import Resolver
 from jlox.statement import (
     BlockStmt,
+    BreakStmt,
     ClassStmt,
     ExpressionStmt,
     FunctionStmt,
+    IfStmt,
     ReturnStmt,
     Stmt,
     VarStmt,
+    WhileStmt,
 )
 from jlox.tokens import Token, TokenType
 
@@ -45,6 +49,10 @@ def closing_paren(line: int = 1) -> Token:
 
 def return_token(line: int = 1) -> Token:
     return Token(TokenType.RETURN, "return", None, line)
+
+
+def token(tt: TokenType, lexeme: str | None = None) -> Token:
+    return Token(tt, lexeme or tt.value, None, 1)
 
 
 def lox_assert(expr1: Expr, expr2: Expr) -> ExpressionStmt:
@@ -192,6 +200,44 @@ def test_string_concat_coercion(interpreter: Interpreter):
             BinaryExpr(LiteralExpr(4), plus(), LiteralExpr(" hello")),
             LiteralExpr("4 hello"),
         ),
+    ]
+
+    resolver.resolve(statements)
+    interpreter.interpret(statements)
+
+
+def test_break_statement(interpreter: Interpreter):
+    resolver = Resolver(interpreter)
+
+    statements: list[Stmt] = [
+        VarStmt(name("x"), LiteralExpr(0)),
+        WhileStmt(
+            BinaryExpr(VariableExpr(name("x")), token(TokenType.LESS), LiteralExpr(20)),
+            BlockStmt(
+                [
+                    ExpressionStmt(
+                        AssignExpr(
+                            name("x"),
+                            BinaryExpr(
+                                VariableExpr(name("x")),
+                                token(TokenType.PLUS),
+                                LiteralExpr(1),
+                            ),
+                        )
+                    ),
+                    IfStmt(
+                        BinaryExpr(
+                            VariableExpr(name("x")),
+                            token(TokenType.EQUAL_EQUAL),
+                            LiteralExpr(5),
+                        ),
+                        BlockStmt([BreakStmt(token(TokenType.BREAK))]),
+                        None,
+                    ),
+                ]
+            ),
+        ),
+        lox_assert(VariableExpr(name("x")), LiteralExpr(5)),
     ]
 
     resolver.resolve(statements)

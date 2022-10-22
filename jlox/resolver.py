@@ -20,6 +20,7 @@ from jlox.expression import (
 from jlox.interpreter import Interpreter
 from jlox.lox_function import FunctionType
 from jlox.statement import (
+    BreakStmt,
     ClassStmt,
     FunctionStmt,
     ReturnStmt,
@@ -208,6 +209,9 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
             self._end_scope()
 
         self._current_class = enclosing_class
+
+    def visitBreakStmt(self, stmt: "BreakStmt") -> None:
+        pass
 
     def _resolve_stmts(self, stmts: Sequence[Stmt]) -> None:
         for stmt in stmts:

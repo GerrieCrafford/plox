@@ -17,6 +17,7 @@ from jlox.expression import (
     VariableExpr,
 )
 from jlox.statement import (
+    BreakStmt,
     ClassStmt,
     ExpressionStmt,
     FunctionStmt,
@@ -119,6 +120,8 @@ class Parser:
             return self._while_statement()
         if self._match(TokenType.LEFT_BRACE):
             return self._block_statement()
+        if self._match(TokenType.BREAK):
+            return self._break_statement()
 
         return self._expression_statement()
 
@@ -203,6 +206,9 @@ class Parser:
         self._consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
 
         return BlockStmt(statements)
+    
+    def _break_statement(self) -> BreakStmt:
+        return BreakStmt(self._previous())
 
     def _expression_statement(self) -> ExpressionStmt:
         expr = self._expression()

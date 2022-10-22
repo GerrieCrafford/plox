@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 from jlox.lox_callable import LoxCallable
 from jlox.statement import FunctionStmt
 from jlox.environment import Environment
-from jlox.return_wrapper import ReturnWrapper
+from jlox.exception_wrappers import ReturnWrapper
 
 
 class FunctionType(Enum):

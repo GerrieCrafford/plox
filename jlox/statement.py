@@ -36,6 +36,9 @@ class StmtVisitor(Protocol[T]):
     def visitClassStmt(self, stmt: "ClassStmt") -> T:
         ...
 
+    def visitBreakStmt(self, stmt: "BreakStmt") -> T:
+        ...
+
 
 V = TypeVar("V")
 
@@ -124,3 +127,11 @@ class ClassStmt(Stmt):
 
     def accept(self, visitor: StmtVisitor[V]) -> V:
         return visitor.visitClassStmt(self)
+
+
+@dataclass
+class BreakStmt(Stmt):
+    keyword: Token
+
+    def accept(self, visitor: StmtVisitor[V]) -> V:
+        return visitor.visitBreakStmt(self)
