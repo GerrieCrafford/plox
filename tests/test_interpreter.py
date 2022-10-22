@@ -2,6 +2,7 @@ from typing import Sequence
 import pytest
 
 from jlox.expression import (
+    AnonymousFunctionExpr,
     AssignExpr,
     BinaryExpr,
     CallExpr,
@@ -238,6 +239,38 @@ def test_break_statement(interpreter: Interpreter):
             ),
         ),
         lox_assert(VariableExpr(name("x")), LiteralExpr(5)),
+    ]
+
+    resolver.resolve(statements)
+    interpreter.interpret(statements)
+
+
+def test_anonymous_function(interpreter: Interpreter):
+    resolver = Resolver(interpreter)
+
+    statements: list[Stmt] = [
+        VarStmt(
+            name("func_anon"),
+            AnonymousFunctionExpr(
+                [name("a")],
+                [
+                    ReturnStmt(
+                        return_token(),
+                        BinaryExpr(
+                            VariableExpr(name("a")),
+                            token(TokenType.PLUS),
+                            LiteralExpr(3),
+                        ),
+                    )
+                ],
+            ),
+        ),
+        lox_assert(
+            CallExpr(
+                VariableExpr(name("func_anon")), closing_paren(), [LiteralExpr(1)]
+            ),
+            LiteralExpr(1 + 3),
+        ),
     ]
 
     resolver.resolve(statements)

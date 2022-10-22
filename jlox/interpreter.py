@@ -1,6 +1,7 @@
 from typing import Any
 from jlox.environment import Environment
 from jlox.expression import (
+    AnonymousFunctionExpr,
     AssignExpr,
     BinaryExpr,
     CallExpr,
@@ -235,6 +236,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
             return self._evaluate(expr.then_expr)
         else:
             return self._evaluate(expr.else_expr)
+
+    def visitAnonymousFunctionExpr(self, expr: "AnonymousFunctionExpr") -> Any:
+        func = LoxFunction(expr, self._environment)
+        return func
 
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         value = self._evaluate(stmt.expression)

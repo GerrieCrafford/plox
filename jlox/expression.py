@@ -1,6 +1,9 @@
 from dataclasses import dataclass
-from typing import Protocol, TypeVar
+from typing import Protocol, Sequence, TypeVar, TYPE_CHECKING
 from jlox.tokens import Token
+
+if TYPE_CHECKING:
+    from jlox.statement import Stmt
 
 T = TypeVar("T", covariant=True)
 
@@ -46,6 +49,9 @@ class ExprVisitor(Protocol[T]):
         ...
 
     def visitIfElseExpr(self, expr: "IfElseExpr") -> T:
+        ...
+
+    def visitAnonymousFunctionExpr(self, expr: "AnonymousFunctionExpr") -> T:
         ...
 
 
@@ -280,6 +286,22 @@ class IfElseExpr(Expr):
 
     def accept(self, visitor: ExprVisitor[V]) -> V:
         return visitor.visitIfElseExpr(self)
+
+    def __hash__(self) -> int:
+        """
+        Use ID as hash because we want expressions to be globally unique
+        in dicts.
+        """
+        return id(self)
+
+
+@dataclass
+class AnonymousFunctionExpr(Expr):
+    params: list[Token]
+    body: Sequence["Stmt"]
+
+    def accept(self, visitor: ExprVisitor[V]) -> V:
+        return visitor.visitAnonymousFunctionExpr(self)
 
     def __hash__(self) -> int:
         """

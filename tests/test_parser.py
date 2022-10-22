@@ -1,5 +1,6 @@
 import pytest
 from jlox.expression import (
+    AnonymousFunctionExpr,
     AssignExpr,
     BinaryExpr,
     CallExpr,
@@ -357,6 +358,7 @@ def test_break_statement():
         token(TT.RIGHT_PAREN),
         token(TT.LEFT_BRACE),
         token(TT.BREAK),
+        token(TT.SEMICOLON),
         token(TT.RIGHT_BRACE),
         token(TT.RIGHT_BRACE),
         token(TT.EOF),
@@ -373,3 +375,30 @@ def test_break_statement():
     assert isinstance(
         statement.loop_body.statements[0].then_branch.statements[0], BreakStmt
     )
+
+
+def test_anonymous_function():
+    tokens = [
+        token(TT.VAR),
+        id_token("anon"),
+        token(TT.EQUAL),
+        token(TT.FUN),
+        token(TT.LEFT_PAREN),
+        id_token("a"),
+        token(TT.RIGHT_PAREN),
+        token(TT.LEFT_BRACE),
+        token(TT.PRINT),
+        id_token("a"),
+        token(TT.SEMICOLON),
+        token(TT.RIGHT_BRACE),
+        token(TT.SEMICOLON),
+        token(TT.EOF),
+    ]
+
+    p = Parser(tokens)
+    [statement] = p.parse()
+
+    assert isinstance(statement, VarStmt)
+    assert isinstance(statement.initializer, AnonymousFunctionExpr)
+    assert statement.initializer.params == [id_token("a")]
+    assert statement.initializer.body == [PrintStmt(VariableExpr(id_token("a")))]

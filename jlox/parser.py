@@ -1,5 +1,6 @@
 from jlox.tokens import Token, TokenType
 from jlox.expression import (
+    AnonymousFunctionExpr,
     AssignExpr,
     BinaryExpr,
     CallExpr,
@@ -30,6 +31,7 @@ from jlox.statement import (
     WhileStmt,
 )
 from jlox.errors import JloxRuntimeError, JloxSyntaxError
+from jlox.lox_function import FuncDeclarationType
 
 
 class Parser:
@@ -50,7 +52,7 @@ class Parser:
         if self._match(TokenType.CLASS):
             return self._class_declaration()
         if self._match(TokenType.FUN):
-            return self._function_declaration("function")
+            return self._named_function_declaration("function")
 
         return self._statement()
 
@@ -76,13 +78,13 @@ class Parser:
 
         methods: list[FunctionStmt] = []
         while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
-            methods.append(self._function_declaration("method"))
+            methods.append(self._named_function_declaration("method"))
 
         self._consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
 
         return ClassStmt(name, superclass, methods)
 
-    def _function_declaration(self, kind: str) -> FunctionStmt:
+    def _named_function_declaration(self, kind: FuncDeclarationType) -> FunctionStmt:
         name = self._consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
         self._consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
 
@@ -106,6 +108,34 @@ class Parser:
         body = self._block_statement().statements
 
         return FunctionStmt(name, params, body)
+
+    def _anonymous_function_definition(self) -> AnonymousFunctionExpr:
+        self._consume(
+            TokenType.LEFT_PAREN, f"Expect '(' after anonymous function 'fun'."
+        )
+
+        params: list[Token] = []
+        if not self._check(TokenType.RIGHT_PAREN):
+            while True:
+                if len(params) >= 255:
+                    raise JloxRuntimeError(
+                        self._peek(), "Can't have more than 255 parameters."
+                    )
+
+                params.append(
+                    self._consume(TokenType.IDENTIFIER, "Expect parameter name.")
+                )
+                if not self._match(TokenType.COMMA):
+                    break
+
+        self._consume(TokenType.RIGHT_PAREN, "Expect ')' after parameter list.")
+        self._consume(
+            TokenType.LEFT_BRACE, "Expect '{' before anonymous function body."
+        )
+
+        body = self._block_statement().statements
+
+        return AnonymousFunctionExpr(params, body)
 
     def _statement(self) -> Stmt:
         if self._match(TokenType.FOR):
@@ -206,9 +236,11 @@ class Parser:
         self._consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
 
         return BlockStmt(statements)
-    
+
     def _break_statement(self) -> BreakStmt:
-        return BreakStmt(self._previous())
+        stmt = BreakStmt(self._previous())
+        self._consume(TokenType.SEMICOLON, "Expect ';' after break.")
+        return stmt
 
     def _expression_statement(self) -> ExpressionStmt:
         expr = self._expression()
@@ -379,6 +411,9 @@ class Parser:
 
         if self._match(TokenType.THIS):
             return ThisExpr(self._previous())
+
+        if self._match(TokenType.FUN):
+            return self._anonymous_function_definition()
 
         if self._match(TokenType.SUPER):
             keyword = self._previous()

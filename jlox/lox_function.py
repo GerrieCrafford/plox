@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, Literal
 from enum import Enum
 
 from jlox.lox_instance import LoxInstance
@@ -9,8 +9,11 @@ if TYPE_CHECKING:
 
 from jlox.lox_callable import LoxCallable
 from jlox.statement import FunctionStmt
+from jlox.expression import AnonymousFunctionExpr
 from jlox.environment import Environment
 from jlox.exception_wrappers import ReturnWrapper
+
+FuncDeclarationType = Literal["function"] | Literal["method"]
 
 
 class FunctionType(Enum):
@@ -27,7 +30,7 @@ def this_token():
 class LoxFunction(LoxCallable):
     def __init__(
         self,
-        declaration: FunctionStmt,
+        declaration: FunctionStmt | AnonymousFunctionExpr,
         closure: Environment,
         is_initializer: bool = False,
     ) -> None:
@@ -63,7 +66,12 @@ class LoxFunction(LoxCallable):
         return len(self._declaration.params)
 
     def __str__(self) -> str:
-        return f"<fn {self._declaration.name.lexeme}>"
+        if isinstance(self._declaration, FunctionStmt):
+            name = self._declaration.name
+        else:
+            name = "anonymous"
+
+        return f"<fn {name}>"
 
     def __repr__(self) -> str:
         return self.__str__()

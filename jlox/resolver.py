@@ -16,6 +16,7 @@ from jlox.expression import (
     VariableExpr,
     GetExpr,
     IfElseExpr,
+    AnonymousFunctionExpr,
 )
 from jlox.interpreter import Interpreter
 from jlox.lox_function import FunctionType
@@ -126,6 +127,9 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
         self._resolve_expr(expr.conditional)
         self._resolve_expr(expr.then_expr)
         self._resolve_expr(expr.else_expr)
+
+    def visitAnonymousFunctionExpr(self, expr: "AnonymousFunctionExpr") -> None:
+        self._resolve_function(expr, FunctionType.FUNCTION)
 
     def visitPrintStmt(self, stmt: "PrintStmt") -> None:
         self._resolve_expr(stmt.expression)
@@ -249,7 +253,9 @@ class Resolver(StmtVisitor[None], ExprVisitor[Any]):
                 self._interpreter.resolve(expr, i)
                 return
 
-    def _resolve_function(self, stmt: FunctionStmt, function_type: FunctionType):
+    def _resolve_function(
+        self, stmt: FunctionStmt | AnonymousFunctionExpr, function_type: FunctionType
+    ):
         enclosing_function = self._current_function
         self._current_function = function_type
 
